@@ -1,4 +1,4 @@
-import { ArrowRight, Check, MessageCircle, PlayCircle } from "lucide-react";
+import { ArrowRight, Check, MessageCircle } from "lucide-react";
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -45,18 +45,6 @@ const ProductMatrix = ({
                       className="absolute inset-0 h-full w-full object-cover"
                     />
                   )}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/25 to-transparent" />
-                  <div className="pointer-events-none absolute bottom-6 left-6 right-6 flex items-end justify-between gap-4 text-white">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-blue-200">
-                        {hasVideo ? "Factory Video" : "Factory Preview"}
-                      </p>
-                      <p className="mt-2 max-w-sm text-lg font-semibold leading-7">
-                        Real production environment for OEM thermal paper programs.
-                      </p>
-                    </div>
-                    <PlayCircle className="h-12 w-12 flex-shrink-0 text-white/90" />
-                  </div>
                 </figure>
               </div>
             </div>
