@@ -152,13 +152,21 @@ const Footer = async () => {
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 text-xs font-medium uppercase tracking-wider md:flex-row">
           <p>&copy; 2026 ZHIXINPAPER CO., LTD. ALL RIGHTS RESERVED.</p>
-          <div className="flex space-x-6">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/login"
+              className="inline-flex items-center rounded-full border border-white/10 bg-black px-3 py-1.5 text-[10px] font-semibold tracking-[0.24em] text-white transition hover:border-white/20 hover:bg-neutral-900"
+            >
+              Admin
+            </Link>
+            <div className="flex space-x-6">
             <Link href="#" className="transition-colors hover:text-white">
               Privacy Policy
             </Link>
             <Link href="#" className="transition-colors hover:text-white">
               Terms of Service
             </Link>
+            </div>
           </div>
         </div>
       </div>

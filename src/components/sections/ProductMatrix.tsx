@@ -27,12 +27,13 @@ const ProductMatrix = ({
               <div className="absolute -bottom-6 -right-6 h-40 w-40 rounded-full bg-blue-600/10 blur-2xl" />
 
               <div className="group relative z-10 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
-                <figure className="relative aspect-[4/3] w-full bg-neutral-900 lg:aspect-video">
+                <figure className="relative w-full overflow-hidden bg-neutral-900">
+                  <div className="relative aspect-[4/3] w-full lg:aspect-video">
                   {hasVideo ? (
                     <video
                       src={factoryPreviewVideo}
                       poster={factoryPreviewPoster}
-                      className="absolute inset-0 h-full w-full object-cover"
+                      className="absolute inset-0 h-full w-full object-cover object-center"
                       muted
                       preload="none"
                       playsInline
@@ -42,9 +43,10 @@ const ProductMatrix = ({
                     <img
                       src={factoryPreviewPoster}
                       alt="Zhixinpaper factory preview"
-                      className="absolute inset-0 h-full w-full object-cover"
+                      className="absolute inset-0 h-full w-full object-cover object-center"
                     />
                   )}
+                  </div>
                 </figure>
               </div>
             </div>

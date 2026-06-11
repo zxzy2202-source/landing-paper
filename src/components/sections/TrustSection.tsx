@@ -27,23 +27,25 @@ const TrustSection = ({ backgroundMedia }: Props) => {
 
   return (
     <section id="trust" className="relative overflow-hidden bg-slate-950">
-      {isVideo ? (
-        <video
-          src={backgroundMedia}
-          className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-        />
-      ) : (
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url('${backgroundMedia}')`,
-          }}
-        />
-      )}
+      <div className="absolute inset-0 overflow-hidden">
+        {isVideo ? (
+          <video
+            src={backgroundMedia}
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        ) : (
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `url('${backgroundMedia}')`,
+            }}
+          />
+        )}
+      </div>
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(2,6,23,0.82),rgba(15,23,42,0.72))]" />
 
       <div className="relative z-10 container mx-auto flex min-h-screen flex-col justify-center px-4 pb-20 pt-32 lg:px-8">
