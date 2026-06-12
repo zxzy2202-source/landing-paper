@@ -46,7 +46,7 @@ const TrustSection = ({ backgroundMedia }: Props) => {
           />
         )}
       </div>
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(2,6,23,0.82),rgba(15,23,42,0.72))]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(2,6,23,0.40),rgba(15,23,42,0.40))]" />
 
       <div className="relative z-10 container mx-auto flex min-h-screen flex-col justify-center px-4 pb-20 pt-32 lg:px-8">
         <div className="mb-12 max-w-3xl rounded-2xl border border-white/10 bg-black/35 p-6 backdrop-blur-sm">

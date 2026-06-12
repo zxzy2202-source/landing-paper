@@ -40,6 +40,10 @@ yarn-error.log*
 
 # local runtime data
 local.db
+auth
+auth-wal
+db
+db-wal
 
 # typescript
 *.tsbuildinfo

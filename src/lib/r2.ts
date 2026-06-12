@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import sharp from "sharp";
 
 import { env, hasR2Config, requireEnvValue } from "@/lib/env";
@@ -33,6 +34,47 @@ function sanitizeBaseName(fileName: string) {
     ext,
     safeName,
   };
+}
+
+export function createUploadDescriptor(fileName: string, contentType: string) {
+  const { ext, safeName } = sanitizeBaseName(fileName);
+  const assetExt = ext || (contentType.startsWith("video/") ? ".mp4" : ".bin");
+  const fileKey = `uploads/${safeName}${assetExt}`;
+
+  return {
+    assetExt,
+    fileKey,
+    safeName,
+    thumbKey: contentType.startsWith("image/") ? `uploads/${safeName}-thumb.webp` : fileKey,
+  };
+}
+
+export function getPublicAssetUrl(fileKey: string) {
+  if (hasR2Config()) {
+    const publicBase = requireEnvValue(env.NEXT_PUBLIC_R2_URL, "NEXT_PUBLIC_R2_URL").replace(
+      /\/+$/,
+      "",
+    );
+
+    return `${publicBase}/${fileKey}`;
+  }
+
+  return `/${fileKey.replace(/\\/g, "/")}`;
+}
+
+export async function createPresignedUploadUrl(fileKey: string, contentType: string) {
+  const client = getR2Client();
+  const bucket = requireEnvValue(env.R2_BUCKET, "R2_BUCKET");
+
+  return getSignedUrl(
+    client,
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: fileKey,
+      ContentType: contentType,
+    }),
+    { expiresIn: 600 },
+  );
 }
 
 async function storePublicFile(fileKey: string, body: Buffer) {
@@ -93,8 +135,10 @@ export async function processMediaUpload(
   contentType: string,
   buffer: Buffer,
 ) {
-  const { ext, safeName } = sanitizeBaseName(fileName);
-  const assetExt = ext || (contentType.startsWith("video/") ? ".mp4" : ".bin");
+  const { assetExt, fileKey, safeName, thumbKey } = createUploadDescriptor(
+    fileName,
+    contentType,
+  );
 
   if (contentType.startsWith("image/")) {
     const main = sharp(buffer, { failOn: "none" })
@@ -112,15 +156,13 @@ export async function processMediaUpload(
       sharp(buffer).metadata(),
     ]);
 
-    const mainKey = `uploads/${safeName}${assetExt}`;
-    const thumbKey = `uploads/${safeName}-thumb.webp`;
     const [url, webpThumbUrl] = await Promise.all([
-      uploadAsset(mainKey, mainResult, contentType),
+      uploadAsset(fileKey, mainResult, contentType),
       uploadAsset(thumbKey, thumbResult, "image/webp"),
     ]);
 
     return {
-      fileKey: mainKey,
+      fileKey,
       height: metadata.height ?? 0,
       mimeType: contentType,
       size: mainResult.byteLength,
@@ -131,7 +173,6 @@ export async function processMediaUpload(
     };
   }
 
-  const fileKey = `uploads/${safeName}${assetExt}`;
   const url = await uploadAsset(fileKey, buffer, contentType);
 
   return {

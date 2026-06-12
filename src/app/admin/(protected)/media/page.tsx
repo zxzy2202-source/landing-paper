@@ -1,4 +1,5 @@
 import { MediaManager } from "@/components/admin/MediaManager";
+import { hasR2Config } from "@/lib/env";
 import { listMediaLibrary } from "@/lib/services/media";
 
 export default async function AdminMediaPage() {
@@ -11,11 +12,15 @@ export default async function AdminMediaPage() {
           媒体资源
         </p>
         <h2 className="mt-2 text-3xl font-semibold text-slate-950">
-          图片、视频与图片槽位统一管理
+          图片、视频与前台槽位统一管理
         </h2>
       </section>
 
-      <MediaManager files={media.files} slots={media.slots} />
+      <MediaManager
+        directUploadEnabled={hasR2Config()}
+        files={media.files}
+        slots={media.slots}
+      />
     </div>
   );
 }

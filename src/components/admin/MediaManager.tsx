@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,59 +39,62 @@ type SlotItem = {
 };
 
 type Props = {
+  directUploadEnabled: boolean;
   files: MediaFileItem[];
   slots: SlotItem[];
 };
 
+const FALLBACK_UPLOAD_LIMIT = 4 * 1024 * 1024;
+
 const TEXT = {
-  altEmptyHint: "\u7559\u7a7a\u5219\u4e0d\u8bbe\u7f6e Alt \u6587\u672c",
-  altLabel: "Alt \u6587\u672c",
-  altPlaceholder: "\u8f93\u5165\u524d\u53f0\u56fe\u7247\u66ff\u4ee3\u6587\u5b57",
-  altSave: "\u4fdd\u5b58 Alt",
-  altSaveFail: "Alt \u6587\u672c\u4fdd\u5b58\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002",
-  altSaveSuccess: "Alt \u6587\u672c\u5df2\u66f4\u65b0\u3002",
-  altSaving: "\u4fdd\u5b58\u4e2d...",
-  currentLink: "\u5f53\u524d\u94fe\u63a5\uff1a",
-  defaultImageFallback: "\u4f7f\u7528\u9ed8\u8ba4\u56fe\u7247\u56de\u9000",
-  defaultVideoFallback: "\u4f7f\u7528\u9ed8\u8ba4\u89c6\u9891\u56de\u9000",
-  fileLinkCopied: "\u6587\u4ef6\u94fe\u63a5\u5df2\u590d\u5236\u3002",
-  filterAll: "\u5168\u90e8",
-  filterImage: "\u56fe\u7247",
-  filterVideo: "\u89c6\u9891",
-  kindImage: "\u56fe\u7247",
-  kindImageSlot: "\u56fe\u7247\u69fd\u4f4d",
-  kindVideo: "\u89c6\u9891",
-  kindVideoSlot: "\u89c6\u9891\u69fd\u4f4d",
-  library: "\u7d20\u6750\u5e93",
-  librarySubtitle: "\u56fe\u7247\u4e0e\u89c6\u9891\u7edf\u4e00\u7ba1\u7406",
-  linkCopyFailed: "\u590d\u5236\u94fe\u63a5\u5931\u8d25\uff0c\u8bf7\u624b\u52a8\u590d\u5236\u3002",
-  manageSlots: "\u53ef\u7ba1\u7406\u69fd\u4f4d",
-  mediaUploadSuccess: "\u5a92\u4f53\u6587\u4ef6\u4e0a\u4f20\u6210\u529f\u3002",
-  noAssets: "\u5f53\u524d\u7b5b\u9009\u6761\u4ef6\u4e0b\u8fd8\u6ca1\u6709\u7d20\u6750\u3002",
-  noCategory: "\u672a\u5206\u7c7b",
-  noImageName: "\u672a\u547d\u540d\u56fe\u7247",
-  noPreview: "\u65e0\u9884\u89c8",
-  noSetting: "\u672a\u8bbe\u7f6e",
-  noVideoName: "\u672a\u547d\u540d\u89c6\u9891",
-  noAssetName: "\u672a\u547d\u540d\u7d20\u6750",
-  openInNewWindow: "\u65b0\u7a97\u53e3\u67e5\u770b",
-  searchPlaceholder: "\u641c\u7d22\u540d\u79f0\u3001\u5206\u7c7b\u3001\u683c\u5f0f\u6216\u94fe\u63a5",
-  slotBinding: "\u69fd\u4f4d\u7ed1\u5b9a",
-  slotBindingFail: "\u66f4\u65b0\u69fd\u4f4d\u7ed1\u5b9a\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002",
-  slotBindingSubtitle: "\u524d\u53f0\u56fe\u7247 / \u89c6\u9891\u69fd\u4f4d\u6620\u5c04",
-  slotBindingSuccess: "\u69fd\u4f4d\u7ed1\u5b9a\u5df2\u66f4\u65b0\u3002",
-  statsAssets: "\u7d20\u6750\u603b\u6570",
-  statsImages: "\u56fe\u7247\u6570\u91cf",
-  statsVideos: "\u89c6\u9891\u6570\u91cf",
-  unknownAuto: "\u81ea\u52a8\u8bc6\u522b",
-  unnamedAsset: "\u672a\u547d\u540d\u7d20\u6750",
-  uploadAction: "\u4e0a\u4f20\u7d20\u6750",
-  uploadFail: "\u4e0a\u4f20\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002",
-  uploading: "\u4e0a\u4f20\u4e2d...",
-  uploadSection: "\u4e0a\u4f20\u8d44\u6e90",
+  altEmptyHint: "留空则不设置 Alt 文本",
+  altLabel: "Alt 文本",
+  altPlaceholder: "输入前台图片替代文字",
+  altSave: "保存 Alt",
+  altSaveFail: "Alt 文本保存失败，请稍后重试。",
+  altSaveSuccess: "Alt 文本已更新。",
+  altSaving: "保存中...",
+  currentLink: "当前链接：",
+  defaultImageFallback: "使用默认图片回退",
+  defaultVideoFallback: "使用默认视频回退",
+  fileLinkCopied: "文件链接已复制。",
+  filterAll: "全部",
+  filterImage: "图片",
+  filterVideo: "视频",
+  kindImage: "图片",
+  kindImageSlot: "图片槽位",
+  kindVideo: "视频",
+  kindVideoSlot: "视频槽位",
+  library: "素材库",
+  librarySubtitle: "图片与视频统一管理",
+  linkCopyFailed: "复制链接失败，请手动复制。",
+  manageSlots: "可管理槽位",
+  mediaUploadSuccess: "媒体文件上传成功。",
+  noAssets: "当前筛选条件下还没有素材。",
+  noCategory: "未分类",
+  noImageName: "未命名图片",
+  noPreview: "无预览",
+  noSetting: "未设置",
+  noVideoName: "未命名视频",
+  noAssetName: "未命名素材",
+  openInNewWindow: "新窗口查看",
+  searchPlaceholder: "搜索名称、分类、格式或链接",
+  slotBinding: "槽位绑定",
+  slotBindingFail: "更新槽位绑定失败，请稍后重试。",
+  slotBindingSubtitle: "前台图片 / 视频槽位映射",
+  slotBindingSuccess: "槽位绑定已更新。",
+  statsAssets: "素材总数",
+  statsImages: "图片数量",
+  statsVideos: "视频数量",
+  unknownAuto: "自动识别",
+  unnamedAsset: "未命名素材",
+  uploadAction: "上传素材",
+  uploadFail: "上传失败，请稍后重试。",
+  uploading: "上传中...",
+  uploadSection: "上传资源",
   uploadSubtitle:
-    "\u652f\u6301\u5e38\u89c1\u56fe\u7247\u4e0e\u89c6\u9891\u683c\u5f0f\uff0c\u4e0a\u4f20\u540e\u53ef\u76f4\u63a5\u7528\u4e8e\u524d\u53f0\u7d20\u6750\u66ff\u6362\u4e0e\u69fd\u4f4d\u7ed1\u5b9a\u3002",
-  uploadTitle: "\u56fe\u7247 / \u89c6\u9891\u7d20\u6750\u4e0a\u4f20",
+    "支持常见图片与视频格式，上传后可直接用于前台素材替换与槽位绑定。",
+  uploadTitle: "图片 / 视频素材上传",
 };
 
 function getMediaKind(file: Pick<MediaFileItem, "mimeType">) {
@@ -142,7 +145,31 @@ function matchesQuery(file: MediaFileItem, query: string) {
     .some((item) => String(item).toLowerCase().includes(keyword));
 }
 
-export function MediaManager({ files: initialFiles, slots: initialSlots }: Props) {
+async function readImageMeta(file: File) {
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const instance = new Image();
+      instance.onload = () => resolve(instance);
+      instance.onerror = () => reject(new Error("图片尺寸读取失败。"));
+      instance.src = objectUrl;
+    });
+
+    return {
+      height: image.naturalHeight || 0,
+      width: image.naturalWidth || 0,
+    };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+export function MediaManager({
+  directUploadEnabled,
+  files: initialFiles,
+  slots: initialSlots,
+}: Props) {
   const [files, setFiles] = useState(initialFiles);
   const [slots, setSlots] = useState(initialSlots);
   const [altInputs, setAltInputs] = useState<Record<string, string>>(
@@ -156,6 +183,8 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
   const [feedback, setFeedback] = useState("");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "image" | "video">("all");
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const filteredFiles = files.filter((file) => {
     const kind = getMediaKind(file);
@@ -166,29 +195,123 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
   const imageCount = files.filter((file) => getMediaKind(file) === "image").length;
   const videoCount = files.length - imageCount;
 
-  async function upload(formData: FormData) {
-    setUploading(true);
-    setFeedback("");
-
+  async function uploadViaServer(formData: FormData) {
     const response = await fetch("/api/admin/media", {
       method: "POST",
       body: formData,
     });
 
     const result = (await response.json()) as MediaFileItem & { error?: string };
-    setUploading(false);
 
     if (!response.ok || result.error) {
-      setFeedback(result.error ?? TEXT.uploadFail);
+      throw new Error(result.error ?? TEXT.uploadFail);
+    }
+
+    return result;
+  }
+
+  async function uploadDirectly(file: File, formData: FormData) {
+    const createResponse = await fetch("/api/admin/media/direct-upload", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contentType: file.type || "application/octet-stream",
+        fileName: file.name,
+      }),
+    });
+
+    const createResult = (await createResponse.json()) as {
+      error?: string;
+      fileKey?: string;
+      uploadUrl?: string;
+      url?: string;
+      webpThumbUrl?: string;
+    };
+
+    if (!createResponse.ok || !createResult.uploadUrl || !createResult.fileKey || !createResult.url) {
+      throw new Error(createResult.error ?? "创建上传地址失败。");
+    }
+
+    const uploadResponse = await fetch(createResult.uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": file.type || "application/octet-stream",
+      },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`文件上传到对象存储失败（${uploadResponse.status}）。`);
+    }
+
+    const imageMeta = file.type.startsWith("image/") ? await readImageMeta(file) : null;
+
+    const registerResponse = await fetch("/api/admin/media/direct-upload", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        alt: String(formData.get("alt") ?? ""),
+        categoryName: String(formData.get("categoryName") ?? "通用素材"),
+        categorySlug: String(formData.get("categorySlug") ?? "general"),
+        contentType: file.type || "application/octet-stream",
+        fileKey: createResult.fileKey,
+        height: imageMeta?.height ?? 0,
+        size: file.size,
+        url: createResult.url,
+        webpThumbUrl: createResult.webpThumbUrl || createResult.url,
+        width: imageMeta?.width ?? 0,
+      }),
+    });
+
+    const registerResult = (await registerResponse.json()) as MediaFileItem & { error?: string };
+
+    if (!registerResponse.ok || registerResult.error) {
+      throw new Error(registerResult.error ?? "素材登记失败。");
+    }
+
+    return registerResult;
+  }
+
+  async function handleUploadSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const file = fileInputRef.current?.files?.[0];
+
+    if (!file) {
+      setFeedback("请选择要上传的文件。");
       return;
     }
 
-    setFiles((current) => [result, ...current]);
-    setAltInputs((current) => ({
-      ...current,
-      [result.id]: result.alt || "",
-    }));
-    setFeedback(TEXT.mediaUploadSuccess);
+    setUploading(true);
+    setFeedback("");
+
+    try {
+      if (!directUploadEnabled && file.size > FALLBACK_UPLOAD_LIMIT) {
+        throw new Error("当前环境未启用直传，大于 4MB 的文件会被平台拦截，请先配置 R2。");
+      }
+
+      const result = directUploadEnabled
+        ? await uploadDirectly(file, formData)
+        : await uploadViaServer(formData);
+
+      setFiles((current) => [result, ...current]);
+      setAltInputs((current) => ({
+        ...current,
+        [result.id]: result.alt || "",
+      }));
+      formRef.current?.reset();
+      setFeedback(TEXT.mediaUploadSuccess);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : TEXT.uploadFail);
+    } finally {
+      setUploading(false);
+    }
   }
 
   function syncMediaAlt(fileId: string, alt: string) {
@@ -365,14 +488,21 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
               {TEXT.uploadTitle}
             </h2>
             <p className="mt-2 text-sm text-slate-500">{TEXT.uploadSubtitle}</p>
+            <p className="mt-2 text-xs text-slate-400">
+              {directUploadEnabled
+                ? "当前为 R2 直传模式，可稳定上传较大的图片与视频文件。"
+                : "当前为本地直传模式，建议单个文件控制在 4MB 内。"}
+            </p>
           </div>
         </div>
 
         <form
-          action={(formData) => startTransition(() => void upload(formData))}
+          ref={formRef}
+          onSubmit={(event) => void handleUploadSubmit(event)}
           className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-[1.2fr_1fr_1fr_auto]"
         >
           <Input
+            ref={fileInputRef}
             name="file"
             type="file"
             accept="image/*,video/*"
@@ -381,12 +511,12 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
           />
           <Input
             name="alt"
-            placeholder="\u7d20\u6750\u540d\u79f0 / Alt \u6587\u672c"
+            placeholder="素材名称 / Alt 文本"
             className="h-11"
           />
           <Input
             name="categoryName"
-            placeholder="\u7d20\u6750\u5206\u7c7b\uff0c\u4f8b\u5982\uff1a\u9996\u9875\u6a2a\u5e45"
+            placeholder="素材分类，例如：首页横幅"
             className="h-11"
           />
           <Button type="submit" disabled={uploading} className="h-11 rounded-full px-6">
@@ -462,11 +592,7 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
 
                 <select
                   value={slot.mediaFileId ?? ""}
-                  onChange={(event) =>
-                    startTransition(() =>
-                      void bindSlot(slot.slotKey, event.target.value || null),
-                    )
-                  }
+                  onChange={(event) => void bindSlot(slot.slotKey, event.target.value || null)}
                   className="mt-4 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50"
                 >
                   <option value="">
@@ -474,9 +600,9 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
                       ? TEXT.defaultVideoFallback
                       : TEXT.defaultImageFallback}
                   </option>
-                    {files
-                      .filter((file) => getMediaKind(file) === acceptedKind)
-                      .map((file) => {
+                  {files
+                    .filter((file) => getMediaKind(file) === acceptedKind)
+                    .map((file) => {
                       const label =
                         file.alt ||
                         file.category?.name ||
@@ -490,8 +616,8 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
                         <option key={file.id} value={file.id}>
                           {`${label} (${meta})`}
                         </option>
-                        );
-                      })}
+                      );
+                    })}
                 </select>
 
                 <div className="mt-4 space-y-3">
@@ -515,9 +641,7 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
                       type="button"
                       variant="outline"
                       className="rounded-full"
-                      onClick={() =>
-                        startTransition(() => void applyDirectUrl(slot))
-                      }
+                      onClick={() => void applyDirectUrl(slot)}
                     >
                       使用链接替换
                     </Button>
@@ -525,9 +649,7 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
                       type="button"
                       variant="outline"
                       className="rounded-full"
-                      onClick={() =>
-                        startTransition(() => void resetSlotToDefault(slot))
-                      }
+                      onClick={() => void resetSlotToDefault(slot)}
                     >
                       恢复默认
                     </Button>
@@ -601,7 +723,7 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
                     ) : (
                       <img
                         src={file.webpThumbUrl || file.url}
-                        alt={file.alt || "\u5a92\u4f53\u9884\u89c8"}
+                        alt={file.alt || "媒体预览"}
                         className="h-full w-full object-cover"
                       />
                     )}
@@ -642,7 +764,7 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
                           variant="outline"
                           className="rounded-full"
                           disabled={savingAltId === file.id}
-                          onClick={() => startTransition(() => void saveAlt(file.id))}
+                          onClick={() => void saveAlt(file.id)}
                         >
                           {savingAltId === file.id ? TEXT.altSaving : TEXT.altSave}
                         </Button>
@@ -650,24 +772,15 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 text-sm text-slate-600">
+                      <p>格式：{file.mimeType}</p>
+                      <p>大小：{formatFileSize(file.size)}</p>
                       <p>
-                        {"\u683c\u5f0f\uff1a"}
-                        {file.mimeType}
-                      </p>
-                      <p>
-                        {"\u5927\u5c0f\uff1a"}
-                        {formatFileSize(file.size)}
-                      </p>
-                      <p>
-                        {"\u5c3a\u5bf8\uff1a"}
+                        尺寸：
                         {file.width > 0 && file.height > 0
                           ? `${file.width} x ${file.height}`
                           : TEXT.unknownAuto}
                       </p>
-                      <p>
-                        {"\u4e0a\u4f20\uff1a"}
-                        {formatMediaDate(file.createdAt)}
-                      </p>
+                      <p>上传：{formatMediaDate(file.createdAt)}</p>
                     </div>
 
                     <p className="break-all text-xs text-slate-400">{file.url}</p>
@@ -677,9 +790,9 @@ export function MediaManager({ files: initialFiles, slots: initialSlots }: Props
                         type="button"
                         variant="outline"
                         className="rounded-full"
-                        onClick={() => startTransition(() => void copyLink(file.url))}
+                        onClick={() => void copyLink(file.url)}
                       >
-                        {"\u590d\u5236\u94fe\u63a5"}
+                        复制链接
                       </Button>
                       <a
                         href={file.url}

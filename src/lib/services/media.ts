@@ -5,7 +5,12 @@ import { and, desc, eq } from "drizzle-orm";
 import { db, requireDatabase } from "@/lib/db/client";
 import { imageSlots, mediaCategories, mediaFiles } from "@/lib/db/schema";
 import { getImageSlotByKey, imageSlotRegistry } from "@/lib/imageSlots";
-import { processMediaUpload } from "@/lib/r2";
+import {
+  createPresignedUploadUrl,
+  createUploadDescriptor,
+  getPublicAssetUrl,
+  processMediaUpload,
+} from "@/lib/r2";
 import { safeRevalidateTag } from "@/lib/cacheRevalidate";
 import { MEDIA_SLOTS_CACHE_TAG } from "@/lib/services/site-settings";
 
@@ -119,6 +124,75 @@ export async function uploadMediaFile(input: {
       url: upload.url,
       webpThumbUrl: upload.webpThumbUrl,
       width: upload.width,
+    })
+    .returning();
+
+  return created;
+}
+
+export async function createDirectUpload(input: {
+  contentType: string;
+  fileName: string;
+}) {
+  const descriptor = createUploadDescriptor(input.fileName, input.contentType);
+  const uploadUrl = await createPresignedUploadUrl(descriptor.fileKey, input.contentType);
+
+  return {
+    fileKey: descriptor.fileKey,
+    uploadUrl,
+    url: getPublicAssetUrl(descriptor.fileKey),
+    webpThumbUrl: input.contentType.startsWith("image/")
+      ? getPublicAssetUrl(descriptor.thumbKey)
+      : getPublicAssetUrl(descriptor.fileKey),
+  };
+}
+
+export async function registerUploadedMedia(input: {
+  alt?: string;
+  categoryName?: string;
+  categorySlug?: string;
+  contentType: string;
+  fileKey: string;
+  height?: number;
+  size: number;
+  url: string;
+  webpThumbUrl?: string;
+  width?: number;
+}) {
+  const database = requireDatabase();
+  let categoryId: string | null = null;
+  const resolvedSlug = slugify(input.categorySlug || input.categoryName || "general");
+
+  const existingCategory = await database.query.mediaCategories.findFirst({
+    where: eq(mediaCategories.slug, resolvedSlug),
+  });
+
+  if (existingCategory) {
+    categoryId = existingCategory.id;
+  } else {
+    const [createdCategory] = await database
+      .insert(mediaCategories)
+      .values({
+        slug: resolvedSlug,
+        name: input.categoryName?.trim() || resolvedSlug,
+      })
+      .returning();
+
+    categoryId = createdCategory.id;
+  }
+
+  const [created] = await database
+    .insert(mediaFiles)
+    .values({
+      alt: input.alt?.trim() || "",
+      categoryId,
+      fileKey: input.fileKey,
+      height: input.height ?? 0,
+      mimeType: input.contentType,
+      size: input.size,
+      url: input.url,
+      webpThumbUrl: input.webpThumbUrl || input.url,
+      width: input.width ?? 0,
     })
     .returning();
 
