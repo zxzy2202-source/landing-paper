@@ -2,6 +2,7 @@ import "@/lib/serverOnly";
 
 import { and, desc, eq } from "drizzle-orm";
 
+import { safeRevalidateTag } from "@/lib/cacheRevalidate";
 import { db, requireDatabase } from "@/lib/db/client";
 import { imageSlots, mediaCategories, mediaFiles } from "@/lib/db/schema";
 import { getImageSlotByKey, imageSlotRegistry } from "@/lib/imageSlots";
@@ -9,10 +10,10 @@ import {
   createPresignedUploadUrl,
   createUploadDescriptor,
   deleteStoredAsset,
+  finalizeDirectUploadedImage,
   getPublicAssetUrl,
   processMediaUpload,
 } from "@/lib/r2";
-import { safeRevalidateTag } from "@/lib/cacheRevalidate";
 import { MEDIA_SLOTS_CACHE_TAG } from "@/lib/services/site-settings";
 
 function slugify(value: string) {
@@ -25,6 +26,53 @@ function slugify(value: string) {
 
 function pickNonEmpty(...values: Array<string | null | undefined>) {
   return values.find((value) => typeof value === "string" && value.trim().length > 0) ?? "";
+}
+
+function resolveMediaCategory(input: {
+  categoryName?: string;
+  categorySlug?: string;
+}) {
+  return {
+    categoryName: input.categoryName?.trim() || "通用素材",
+    categorySlug: slugify(input.categorySlug || input.categoryName || "general"),
+  };
+}
+
+function buildSlotAlt(slotKey: string, fallbackLabel?: string) {
+  const slot = getImageSlotByKey(slotKey);
+  if (!slot) {
+    return fallbackLabel?.trim() || slotKey;
+  }
+
+  return `${slot.label} - ${slot.slotKey}`;
+}
+
+async function ensureMediaCategory(
+  database: ReturnType<typeof requireDatabase>,
+  input: {
+    categoryName?: string;
+    categorySlug?: string;
+  },
+) {
+  const resolved = resolveMediaCategory(input);
+
+  const existingCategory = await database.query.mediaCategories.findFirst({
+    where: eq(mediaCategories.slug, resolved.categorySlug),
+  });
+
+  if (existingCategory) {
+    return existingCategory.id;
+  }
+
+  const [createdCategory] = await database
+    .insert(mediaCategories)
+    .values({
+      slug: resolved.categorySlug,
+      name: resolved.categoryName,
+    })
+    .returning();
+
+  return createdCategory.id;
 }
 
 export async function listMediaLibrary() {
@@ -91,27 +139,7 @@ export async function uploadMediaFile(input: {
     input.contentType,
     input.fileBuffer,
   );
-
-  let categoryId: string | null = null;
-  const resolvedSlug = slugify(input.categorySlug || input.categoryName || "general");
-
-  const existingCategory = await database.query.mediaCategories.findFirst({
-    where: eq(mediaCategories.slug, resolvedSlug),
-  });
-
-  if (existingCategory) {
-    categoryId = existingCategory.id;
-  } else {
-    const [createdCategory] = await database
-      .insert(mediaCategories)
-      .values({
-        slug: resolvedSlug,
-        name: input.categoryName?.trim() || resolvedSlug,
-      })
-      .returning();
-
-    categoryId = createdCategory.id;
-  }
+  const categoryId = await ensureMediaCategory(database, input);
 
   const [created] = await database
     .insert(mediaFiles)
@@ -161,26 +189,7 @@ export async function registerUploadedMedia(input: {
   width?: number;
 }) {
   const database = requireDatabase();
-  let categoryId: string | null = null;
-  const resolvedSlug = slugify(input.categorySlug || input.categoryName || "general");
-
-  const existingCategory = await database.query.mediaCategories.findFirst({
-    where: eq(mediaCategories.slug, resolvedSlug),
-  });
-
-  if (existingCategory) {
-    categoryId = existingCategory.id;
-  } else {
-    const [createdCategory] = await database
-      .insert(mediaCategories)
-      .values({
-        slug: resolvedSlug,
-        name: input.categoryName?.trim() || resolvedSlug,
-      })
-      .returning();
-
-    categoryId = createdCategory.id;
-  }
+  const categoryId = await ensureMediaCategory(database, input);
 
   const [created] = await database
     .insert(mediaFiles)
@@ -198,6 +207,81 @@ export async function registerUploadedMedia(input: {
     .returning();
 
   return created;
+}
+
+export async function registerProcessedDirectUpload(input: {
+  alt?: string;
+  categoryName?: string;
+  categorySlug?: string;
+  contentType: string;
+  fileKey: string;
+  height?: number;
+  size?: number;
+  slotKey?: string;
+  url?: string;
+  webpThumbUrl?: string;
+  width?: number;
+}) {
+  const database = requireDatabase();
+  const categoryId = await ensureMediaCategory(database, input);
+  const processed = input.contentType.startsWith("image/")
+    ? await finalizeDirectUploadedImage(input.fileKey, input.contentType)
+    : {
+        fileKey: input.fileKey,
+        height: input.height ?? 0,
+        mimeType: input.contentType,
+        size: input.size ?? 0,
+        url: input.url || getPublicAssetUrl(input.fileKey),
+        webpThumbUrl: input.webpThumbUrl || input.url || getPublicAssetUrl(input.fileKey),
+        width: input.width ?? 0,
+      };
+
+  const [created] = await database
+    .insert(mediaFiles)
+    .values({
+      alt: input.alt?.trim() || (input.slotKey ? buildSlotAlt(input.slotKey) : ""),
+      categoryId,
+      fileKey: processed.fileKey,
+      height: processed.height,
+      mimeType: processed.mimeType,
+      size: processed.size,
+      url: processed.url,
+      webpThumbUrl: processed.webpThumbUrl,
+      width: processed.width,
+    })
+    .returning();
+
+  if (input.slotKey) {
+    await assignMediaToSlot(input.slotKey, created.id);
+  }
+
+  return created;
+}
+
+export async function uploadMediaToSlot(input: {
+  contentType: string;
+  fileBuffer: Buffer;
+  fileName: string;
+  slotKey: string;
+}) {
+  const slot = getImageSlotByKey(input.slotKey);
+
+  if (!slot) {
+    throw new Error(`Unknown slotKey: ${input.slotKey}`);
+  }
+
+  const defaultAlt = buildSlotAlt(input.slotKey);
+  const media = await uploadMediaFile({
+    alt: defaultAlt,
+    categoryName: slot.label,
+    categorySlug: slot.category,
+    contentType: input.contentType,
+    fileBuffer: input.fileBuffer,
+    fileName: input.fileName,
+  });
+
+  await assignMediaToSlot(input.slotKey, media.id);
+  return media;
 }
 
 export async function updateMediaFileAlt(fileId: string, alt: string) {

@@ -15,16 +15,15 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "站点主 Logo",
     category: "brand",
     mediaKind: "image",
-    description: "导航栏与页脚共用的品牌 Logo。",
+    description: "导航栏与全站品牌识别使用的主 Logo。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/02.png",
   },
   {
     slotKey: "brand.logo.footer",
-    label: "\u9875\u811a Logo",
+    label: "页脚 Logo",
     category: "brand",
     mediaKind: "image",
-    description:
-      "\u9875\u811a\u533a\u57df\u7684 Logo\uff0c\u53ef\u5728\u540e\u53f0\u5a92\u4f53\u7ba1\u7406\u4e2d\u5355\u72ec\u66ff\u6362\u3002",
+    description: "前台页脚区域使用的 Logo，可单独替换。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/02.png",
   },
   {
@@ -32,7 +31,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "首页首屏背景图",
     category: "hero",
     mediaKind: "image",
-    description: "首页主视觉背景图。",
+    description: "首页首屏默认背景图。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/432585374.webp",
   },
   {
@@ -40,7 +39,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "美国站首屏背景图",
     category: "hero",
     mediaKind: "image",
-    description: "美国落地页首屏背景图。",
+    description: "美国站落地页首屏背景图。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/432585374.webp",
   },
   {
@@ -48,7 +47,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "加拿大站首屏背景图",
     category: "hero",
     mediaKind: "image",
-    description: "加拿大落地页首屏背景图。",
+    description: "加拿大站落地页首屏背景图。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/432585374.webp",
   },
   {
@@ -56,7 +55,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "欧洲站首屏背景图",
     category: "hero",
     mediaKind: "image",
-    description: "欧洲落地页首屏背景图。",
+    description: "欧洲站落地页首屏背景图。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/432585374.webp",
   },
   {
@@ -72,7 +71,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "认证横幅背景图",
     category: "marquee",
     mediaKind: "image",
-    description: "首页认证横幅背景图。",
+    description: "首页认证横幅使用的背景图。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/0-29-2.png",
   },
   {
@@ -80,7 +79,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "信任区背景视频",
     category: "trust",
     mediaKind: "video",
-    description: "信任区背景视频，未绑定视频时可回退到默认背景图。",
+    description: "信任区背景视频，未绑定视频时回退到默认封面图。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/0018.webp",
   },
   {
@@ -88,7 +87,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "工厂预览视频",
     category: "about",
     mediaKind: "video",
-    description: "首页工厂预览主视频。",
+    description: "前台工厂预览模块的主视频。",
     fallbackUrl: "/defaults/factory-preview.mp4",
   },
   {
@@ -96,7 +95,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "工厂预览封面图",
     category: "about",
     mediaKind: "image",
-    description: "首页工厂预览视频封面图。",
+    description: "工厂预览视频的封面图。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/0018.webp",
   },
   {
@@ -104,7 +103,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "工厂相册 1",
     category: "about-gallery",
     mediaKind: "image",
-    description: "工厂图库第 1 张图片。",
+    description: "工厂图片库第 1 张图片。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/0018.webp",
   },
   {
@@ -112,7 +111,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "工厂相册 2",
     category: "about-gallery",
     mediaKind: "image",
-    description: "工厂图库第 2 张图片。",
+    description: "工厂图片库第 2 张图片。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/0-11.jpg",
   },
   {
@@ -120,7 +119,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "工厂相册 3",
     category: "about-gallery",
     mediaKind: "image",
-    description: "工厂图库第 3 张图片。",
+    description: "工厂图片库第 3 张图片。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/0-46.jpg",
   },
   {
@@ -128,7 +127,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "工厂相册 4",
     category: "about-gallery",
     mediaKind: "image",
-    description: "工厂图库第 4 张图片。",
+    description: "工厂图片库第 4 张图片。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/0-15-scaled.jpg",
   },
   {
@@ -136,7 +135,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "工厂相册 5",
     category: "about-gallery",
     mediaKind: "image",
-    description: "工厂图库第 5 张图片。",
+    description: "工厂图片库第 5 张图片。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/0-7.jpg",
   },
   {
@@ -144,7 +143,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "工厂相册 6",
     category: "about-gallery",
     mediaKind: "image",
-    description: "工厂图库第 6 张图片。",
+    description: "工厂图片库第 6 张图片。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/0-6.jpg",
   },
   {
@@ -152,7 +151,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "工厂相册 7",
     category: "about-gallery",
     mediaKind: "image",
-    description: "工厂图库第 7 张图片。",
+    description: "工厂图片库第 7 张图片。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/32b6c697519b48fc814b3a4712323de2.jpg",
   },
   {
@@ -160,7 +159,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "工厂相册 8",
     category: "about-gallery",
     mediaKind: "image",
-    description: "工厂图库第 8 张图片。",
+    description: "工厂图片库第 8 张图片。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/04/1ca668e4-96e7-4f29-8ccb-84f670e2c29c.jpg",
   },
   {
@@ -176,7 +175,7 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
     label: "产品卡 2 图片",
     category: "products",
     mediaKind: "image",
-    description: "Portable/Mobile Printer Rolls 产品卡图片。",
+    description: "Portable / Mobile Printer Rolls 产品卡图片。",
     fallbackUrl: "https://pos.zhixinpaper.com/wp-content/uploads/2026/05/0011.webp",
   },
   {

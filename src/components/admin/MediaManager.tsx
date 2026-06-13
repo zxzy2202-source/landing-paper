@@ -47,21 +47,24 @@ type Props = {
 const FALLBACK_UPLOAD_LIMIT = 4 * 1024 * 1024;
 
 const TEXT = {
-  altEmptyHint: "留空则不设置 Alt 文本",
+  altEmptyHint: "留空则不单独设置 Alt 文本。",
   altLabel: "Alt 文本",
-  altPlaceholder: "输入前台图片替代文字",
+  altPlaceholder: "输入前台展示时使用的替代文本",
   altSave: "保存 Alt",
   altSaveFail: "Alt 文本保存失败，请稍后重试。",
   altSaveSuccess: "Alt 文本已更新。",
   altSaving: "保存中...",
+  copyLink: "复制链接",
   currentLink: "当前链接：",
   defaultImageFallback: "使用默认图片回退",
   defaultVideoFallback: "使用默认视频回退",
   deleteAction: "删除素材",
-  deleteConfirm: "确认删除这个素材吗？删除后对应槽位会解绑。",
+  deleteConfirm: "确认删除这个素材吗？删除后，已绑定的槽位会自动解绑。",
   deleteFail: "删除素材失败，请稍后重试。",
   deleteSuccess: "素材已删除。",
   deleting: "删除中...",
+  directModeHint: "当前已启用 R2 直传，上传后服务端会自动压缩图片并生成 WebP 缩略图。",
+  fallbackModeHint: "当前为服务端上传模式，建议单个文件控制在 4MB 以内。",
   fileLinkCopied: "文件链接已复制。",
   filterAll: "全部",
   filterImage: "图片",
@@ -70,36 +73,39 @@ const TEXT = {
   kindImageSlot: "图片槽位",
   kindVideo: "视频",
   kindVideoSlot: "视频槽位",
-  library: "素材库",
-  librarySubtitle: "图片与视频统一管理",
+  library: "媒体库",
+  librarySubtitle: "图片与视频统一管理，可修改 Alt、复制链接或删除素材。",
   linkCopyFailed: "复制链接失败，请手动复制。",
-  manageSlots: "可管理槽位",
-  mediaUploadSuccess: "媒体文件上传成功。",
+  manageSlots: "槽位数量",
+  mediaUploadSuccess: "素材上传成功。",
   noAssets: "当前筛选条件下还没有素材。",
   noCategory: "未分类",
   noImageName: "未命名图片",
-  noPreview: "无预览",
+  noPreview: "暂无预览",
   noSetting: "未设置",
   noVideoName: "未命名视频",
   noAssetName: "未命名素材",
-  openInNewWindow: "新窗口查看",
+  openInNewWindow: "新窗口打开",
   searchPlaceholder: "搜索名称、分类、格式或链接",
   slotBinding: "槽位绑定",
   slotBindingFail: "更新槽位绑定失败，请稍后重试。",
-  slotBindingSubtitle: "前台图片 / 视频槽位映射",
+  slotBindingSubtitle: "每个前台图片或视频槽位都可以单独上传、绑定与替换。",
   slotBindingSuccess: "槽位绑定已更新。",
+  slotUploadMissing: "请先选择要上传到当前槽位的文件。",
+  slotUploadSuccess: "上传并绑定成功。",
   statsAssets: "素材总数",
   statsImages: "图片数量",
   statsVideos: "视频数量",
   unknownAuto: "自动识别",
-  unnamedAsset: "未命名素材",
   uploadAction: "上传素材",
   uploadFail: "上传失败，请稍后重试。",
   uploading: "上传中...",
   uploadSection: "上传资源",
+  uploadSlotAction: "上传并绑定",
   uploadSubtitle:
-    "支持常见图片与视频格式，上传后可直接用于前台素材替换与槽位绑定。",
+    "支持常见图片与视频格式。图片上传后服务端会自动压缩、生成 WebP 缩略图并写入媒体库。",
   uploadTitle: "图片 / 视频素材上传",
+  useLinkReplace: "使用链接替换",
 };
 
 function getMediaKind(file: Pick<MediaFileItem, "mimeType">) {
@@ -170,6 +176,10 @@ async function readImageMeta(file: File) {
   }
 }
 
+function getDisplayName(file: MediaFileItem, kind: "image" | "video") {
+  return file.alt || file.category?.name || (kind === "video" ? TEXT.noVideoName : TEXT.noImageName);
+}
+
 export function MediaManager({
   directUploadEnabled,
   files: initialFiles,
@@ -186,11 +196,13 @@ export function MediaManager({
   const [uploading, setUploading] = useState(false);
   const [savingAltId, setSavingAltId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [uploadingSlotKey, setUploadingSlotKey] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "image" | "video">("all");
   const formRef = useRef<HTMLFormElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const slotFileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const filteredFiles = files.filter((file) => {
     const kind = getMediaKind(file);
@@ -253,7 +265,6 @@ export function MediaManager({
     }
 
     const imageMeta = file.type.startsWith("image/") ? await readImageMeta(file) : null;
-
     const registerResponse = await fetch("/api/admin/media/direct-upload", {
       method: "PUT",
       headers: {
@@ -299,14 +310,14 @@ export function MediaManager({
 
     try {
       if (!directUploadEnabled && file.size > FALLBACK_UPLOAD_LIMIT) {
-        throw new Error("当前环境未启用直传，大于 4MB 的文件会被平台拦截，请先配置 R2。");
+        throw new Error("当前未启用 R2 直传，大于 4MB 的文件可能被平台拦截，请先完成 R2 配置。");
       }
 
       const result = directUploadEnabled
         ? await uploadDirectly(file, formData)
         : await uploadViaServer(formData);
 
-      setFiles((current) => [result, ...current]);
+      setFiles((current) => [result, ...current.filter((item) => item.id !== result.id)]);
       setAltInputs((current) => ({
         ...current,
         [result.id]: result.alt || "",
@@ -380,8 +391,7 @@ export function MediaManager({
     mediaFileId: string | null,
     fallbackUrl?: string | null,
   ) {
-    const encodedSlotKey = encodeURIComponent(slotKey);
-    const response = await fetch(`/api/admin/slots/${encodedSlotKey}`, {
+    const response = await fetch(`/api/admin/slots/${encodeURIComponent(slotKey)}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -395,10 +405,9 @@ export function MediaManager({
     }
 
     const nextMedia = files.find((file) => file.id === mediaFileId) ?? null;
+    const defaultFallbackUrl = slots.find((slot) => slot.slotKey === slotKey)?.defaultFallbackUrl || "";
     const nextFallbackUrl =
-      fallbackUrl !== undefined
-        ? fallbackUrl || slots.find((slot) => slot.slotKey === slotKey)?.defaultFallbackUrl || ""
-        : undefined;
+      fallbackUrl !== undefined ? fallbackUrl || defaultFallbackUrl : undefined;
 
     updateSlotState(slotKey, {
       fallbackUrl: nextFallbackUrl,
@@ -511,6 +520,54 @@ export function MediaManager({
     }
   }
 
+  async function uploadSlotMedia(slot: SlotItem, file: File) {
+    setUploadingSlotKey(slot.slotKey);
+    setFeedback("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`/api/admin/slots/${encodeURIComponent(slot.slotKey)}/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = (await response.json()) as MediaFileItem & { error?: string };
+
+      if (!response.ok || result.error) {
+        throw new Error(result.error ?? TEXT.uploadFail);
+      }
+
+      setFiles((current) => [result, ...current.filter((item) => item.id !== result.id)]);
+      setAltInputs((current) => ({
+        ...current,
+        [result.id]: result.alt || "",
+      }));
+      updateSlotState(slot.slotKey, {
+        fallbackUrl: slot.fallbackUrl,
+        mediaFileId: result.id,
+        mediaFile: {
+          alt: result.alt,
+          id: result.id,
+          mimeType: result.mimeType,
+          url: result.url,
+          webpThumbUrl: result.webpThumbUrl,
+        },
+      });
+
+      if (slotFileInputRefs.current[slot.slotKey]) {
+        slotFileInputRefs.current[slot.slotKey]!.value = "";
+      }
+
+      setFeedback(`${slot.label}${TEXT.slotUploadSuccess}`);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : TEXT.uploadFail);
+    } finally {
+      setUploadingSlotKey(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -538,14 +595,10 @@ export function MediaManager({
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-blue-600">
               {TEXT.uploadSection}
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-950">
-              {TEXT.uploadTitle}
-            </h2>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-950">{TEXT.uploadTitle}</h2>
             <p className="mt-2 text-sm text-slate-500">{TEXT.uploadSubtitle}</p>
             <p className="mt-2 text-xs text-slate-400">
-              {directUploadEnabled
-                ? "当前为 R2 直传模式，可稳定上传较大的图片与视频文件。"
-                : "当前为本地上传模式，建议单个文件控制在 4MB 内。"}
+              {directUploadEnabled ? TEXT.directModeHint : TEXT.fallbackModeHint}
             </p>
           </div>
         </div>
@@ -565,7 +618,7 @@ export function MediaManager({
           />
           <Input
             name="alt"
-            placeholder="素材名称 / Alt 文本"
+            placeholder="素材名称或 Alt 文本"
             className="h-11"
           />
           <Input
@@ -594,14 +647,12 @@ export function MediaManager({
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {slots.map((slot) => {
             const acceptedKind = slot.mediaKind ?? "image";
-            const slotPreviewIsVideo =
-              ((slot.mediaFile?.mimeType?.startsWith("video/") ?? false) ||
-                acceptedKind === "video") &&
-              isVideoLikeUrl(slot.mediaFile?.url || slot.fallbackUrl);
-            const slotPreviewUrl =
+            const previewUrl =
               acceptedKind === "video"
                 ? slot.mediaFile?.url || slot.fallbackUrl
                 : slot.mediaFile?.webpThumbUrl || slot.mediaFile?.url || slot.fallbackUrl;
+            const previewIsVideo =
+              acceptedKind === "video" && isVideoLikeUrl(slot.mediaFile?.url || slot.fallbackUrl);
 
             return (
               <div
@@ -610,16 +661,16 @@ export function MediaManager({
               >
                 <div className="flex gap-4">
                   <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-slate-200">
-                    {slotPreviewIsVideo ? (
+                    {previewIsVideo ? (
                       <video
-                        src={slotPreviewUrl}
+                        src={previewUrl}
                         className="h-full w-full object-cover"
                         muted
                         playsInline
                       />
-                    ) : slotPreviewUrl ? (
+                    ) : previewUrl ? (
                       <img
-                        src={slotPreviewUrl}
+                        src={previewUrl}
                         alt={slot.label}
                         className="h-full w-full object-cover"
                       />
@@ -641,6 +692,9 @@ export function MediaManager({
                       {TEXT.currentLink}
                       {slot.mediaFile?.url ?? (slot.fallbackUrl || TEXT.noSetting)}
                     </p>
+                    {slot.mediaFile?.alt ? (
+                      <p className="mt-2 text-xs text-slate-400">Alt：{slot.mediaFile.alt}</p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -650,21 +704,16 @@ export function MediaManager({
                   className="mt-4 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50"
                 >
                   <option value="">
-                    {acceptedKind === "video"
-                      ? TEXT.defaultVideoFallback
-                      : TEXT.defaultImageFallback}
+                    {acceptedKind === "video" ? TEXT.defaultVideoFallback : TEXT.defaultImageFallback}
                   </option>
                   {files
                     .filter((file) => getMediaKind(file) === acceptedKind)
                     .map((file) => {
-                      const label =
-                        file.alt ||
-                        file.category?.name ||
-                        (acceptedKind === "video" ? TEXT.noVideoName : TEXT.noImageName);
+                      const label = getDisplayName(file, acceptedKind);
                       const meta =
                         acceptedKind === "video"
                           ? formatFileSize(file.size)
-                          : `${file.width}x${file.height}`;
+                          : `${file.width} x ${file.height}`;
 
                       return (
                         <option key={file.id} value={file.id}>
@@ -675,6 +724,38 @@ export function MediaManager({
                 </select>
 
                 <div className="mt-4 space-y-3">
+                  <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+                    <Input
+                      ref={(node) => {
+                        slotFileInputRefs.current[slot.slotKey] = node;
+                      }}
+                      type="file"
+                      accept={acceptedKind === "video" ? "video/*" : "image/*"}
+                      className="h-11"
+                    />
+                    <Button
+                      type="button"
+                      className="h-11 rounded-full px-5"
+                      disabled={uploadingSlotKey === slot.slotKey}
+                      onClick={() => {
+                        const file = slotFileInputRefs.current[slot.slotKey]?.files?.[0];
+
+                        if (!file) {
+                          setFeedback(TEXT.slotUploadMissing);
+                          return;
+                        }
+
+                        void uploadSlotMedia(slot, file);
+                      }}
+                    >
+                      {uploadingSlotKey === slot.slotKey ? TEXT.uploading : TEXT.uploadSlotAction}
+                    </Button>
+                  </div>
+
+                  <p className="text-xs text-slate-400">
+                    上传到该槽位后，会自动绑定并根据槽位生成对应的 Alt 文本。
+                  </p>
+
                   <Input
                     value={slotUrlInputs[slot.slotKey] ?? ""}
                     onChange={(event) =>
@@ -685,8 +766,8 @@ export function MediaManager({
                     }
                     placeholder={
                       acceptedKind === "video"
-                        ? "粘贴视频链接后可直接替换当前视频槽位"
-                        : "粘贴图片链接后可直接替换当前图片槽位"
+                        ? "粘贴视频链接后，可直接替换当前视频槽位"
+                        : "粘贴图片链接后，可直接替换当前图片槽位"
                     }
                     className="h-11"
                   />
@@ -697,7 +778,7 @@ export function MediaManager({
                       className="rounded-full"
                       onClick={() => void applyDirectUrl(slot)}
                     >
-                      使用链接替换
+                      {TEXT.useLinkReplace}
                     </Button>
                     <Button
                       type="button"
@@ -788,9 +869,7 @@ export function MediaManager({
 
                   <div className="space-y-3 p-4">
                     <div>
-                      <p className="font-medium text-slate-950">
-                        {file.alt || file.category?.name || TEXT.noAssetName}
-                      </p>
+                      <p className="font-medium text-slate-950">{getDisplayName(file, kind)}</p>
                       <p className="mt-1 text-sm text-slate-500">
                         {file.category?.name || TEXT.noCategory}
                       </p>
@@ -855,7 +934,7 @@ export function MediaManager({
                         className="rounded-full"
                         onClick={() => void copyLink(file.url)}
                       >
-                        复制链接
+                        {TEXT.copyLink}
                       </Button>
                       <a
                         href={file.url}

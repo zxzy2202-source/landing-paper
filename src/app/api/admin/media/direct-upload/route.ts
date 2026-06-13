@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { getCurrentAdminSession } from "@/lib/auth";
 import { hasR2Config } from "@/lib/env";
-import { createDirectUpload, registerUploadedMedia } from "@/lib/services/media";
+import { createDirectUpload, registerProcessedDirectUpload } from "@/lib/services/media";
 
 const createUploadSchema = z.object({
   contentType: z.string().min(1),
@@ -17,8 +17,9 @@ const completeUploadSchema = z.object({
   contentType: z.string().min(1),
   fileKey: z.string().min(1),
   height: z.number().int().min(0).optional(),
-  size: z.number().int().min(1),
-  url: z.string().url(),
+  size: z.number().int().min(1).optional(),
+  slotKey: z.string().optional(),
+  url: z.string().url().optional(),
   webpThumbUrl: z.string().url().optional(),
   width: z.number().int().min(0).optional(),
 });
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
   }
 
   if (!hasR2Config()) {
-    return NextResponse.json({ error: "当前环境未配置 R2 直传。" }, { status: 400 });
+    return NextResponse.json({ error: "当前环境尚未配置 R2 直传。" }, { status: 400 });
   }
 
   try {
@@ -71,7 +72,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "素材登记参数无效。" }, { status: 400 });
     }
 
-    const media = await registerUploadedMedia(parsed.data);
+    const media = await registerProcessedDirectUpload(parsed.data);
     return NextResponse.json(media);
   } catch (error) {
     return NextResponse.json(

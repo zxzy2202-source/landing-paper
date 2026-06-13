@@ -1,9 +1,9 @@
 import "@/lib/serverOnly";
 
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import sharp from "sharp";
 
@@ -64,6 +64,10 @@ export function getPublicAssetUrl(fileKey: string) {
 
 export function getLocalAssetPath(fileKey: string) {
   return path.join(process.cwd(), "public", fileKey);
+}
+
+export function getThumbKeyForFileKey(fileKey: string) {
+  return fileKey.replace(/\.[^.]+$/, "") + "-thumb.webp";
 }
 
 export async function createPresignedUploadUrl(fileKey: string, contentType: string) {
@@ -154,6 +158,74 @@ async function uploadAsset(fileKey: string, body: Buffer, contentType: string) {
   return storePublicFile(fileKey, body);
 }
 
+async function readStoredAsset(fileKey: string) {
+  if (hasR2Config()) {
+    const client = getR2Client();
+    const bucket = requireEnvValue(env.R2_BUCKET, "R2_BUCKET");
+    const response = await client.send(
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: fileKey,
+      }),
+    );
+
+    if (!response.Body) {
+      throw new Error(`Stored asset body is empty: ${fileKey}`);
+    }
+
+    const bytes = await response.Body.transformToByteArray();
+    return Buffer.from(bytes);
+  }
+
+  return readFile(getLocalAssetPath(fileKey));
+}
+
+async function buildImageVariants(buffer: Buffer) {
+  const main = sharp(buffer, { failOn: "none" })
+    .rotate()
+    .resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true });
+
+  const thumb = sharp(buffer, { failOn: "none" })
+    .rotate()
+    .resize({ width: 400, height: 400, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 78 });
+
+  const [mainResult, thumbResult, metadata] = await Promise.all([
+    main.toBuffer(),
+    thumb.toBuffer(),
+    sharp(buffer).metadata(),
+  ]);
+
+  return {
+    height: metadata.height ?? 0,
+    mainResult,
+    size: mainResult.byteLength,
+    thumbResult,
+    width: metadata.width ?? 0,
+  };
+}
+
+export async function finalizeDirectUploadedImage(fileKey: string, contentType: string) {
+  const buffer = await readStoredAsset(fileKey);
+  const thumbKey = getThumbKeyForFileKey(fileKey);
+  const variants = await buildImageVariants(buffer);
+  const [url, webpThumbUrl] = await Promise.all([
+    uploadAsset(fileKey, variants.mainResult, contentType),
+    uploadAsset(thumbKey, variants.thumbResult, "image/webp"),
+  ]);
+
+  return {
+    fileKey,
+    height: variants.height,
+    mimeType: contentType,
+    size: variants.size,
+    thumbKey,
+    url,
+    webpThumbUrl,
+    width: variants.width,
+  };
+}
+
 export async function processMediaUpload(
   fileName: string,
   contentType: string,
@@ -165,35 +237,22 @@ export async function processMediaUpload(
   );
 
   if (contentType.startsWith("image/")) {
-    const main = sharp(buffer, { failOn: "none" })
-      .rotate()
-      .resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true });
-
-    const thumb = sharp(buffer, { failOn: "none" })
-      .rotate()
-      .resize({ width: 400, height: 400, fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 78 });
-
-    const [mainResult, thumbResult, metadata] = await Promise.all([
-      main.toBuffer(),
-      thumb.toBuffer(),
-      sharp(buffer).metadata(),
-    ]);
+    const variants = await buildImageVariants(buffer);
 
     const [url, webpThumbUrl] = await Promise.all([
-      uploadAsset(fileKey, mainResult, contentType),
-      uploadAsset(thumbKey, thumbResult, "image/webp"),
+      uploadAsset(fileKey, variants.mainResult, contentType),
+      uploadAsset(thumbKey, variants.thumbResult, "image/webp"),
     ]);
 
     return {
       fileKey,
-      height: metadata.height ?? 0,
+      height: variants.height,
       mimeType: contentType,
-      size: mainResult.byteLength,
+      size: variants.size,
       thumbKey,
       url,
       webpThumbUrl,
-      width: metadata.width ?? 0,
+      width: variants.width,
     };
   }
 
