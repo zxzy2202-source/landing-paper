@@ -57,6 +57,11 @@ const TEXT = {
   currentLink: "当前链接：",
   defaultImageFallback: "使用默认图片回退",
   defaultVideoFallback: "使用默认视频回退",
+  deleteAction: "删除素材",
+  deleteConfirm: "确认删除这个素材吗？删除后对应槽位会解绑。",
+  deleteFail: "删除素材失败，请稍后重试。",
+  deleteSuccess: "素材已删除。",
+  deleting: "删除中...",
   fileLinkCopied: "文件链接已复制。",
   filterAll: "全部",
   filterImage: "图片",
@@ -180,6 +185,7 @@ export function MediaManager({
   );
   const [uploading, setUploading] = useState(false);
   const [savingAltId, setSavingAltId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "image" | "video">("all");
@@ -333,6 +339,20 @@ export function MediaManager({
     );
   }
 
+  function removeMediaFromSlots(fileId: string) {
+    setSlots((current) =>
+      current.map((slot) =>
+        slot.mediaFile?.id === fileId
+          ? {
+              ...slot,
+              mediaFile: null,
+              mediaFileId: null,
+            }
+          : slot,
+      ),
+    );
+  }
+
   function updateSlotState(
     slotKey: string,
     next: {
@@ -448,6 +468,40 @@ export function MediaManager({
     setFeedback(TEXT.altSaveSuccess);
   }
 
+  async function removeMedia(fileId: string) {
+    if (!window.confirm(TEXT.deleteConfirm)) {
+      return;
+    }
+
+    setDeletingId(fileId);
+    setFeedback("");
+
+    try {
+      const response = await fetch(`/api/admin/media/${fileId}`, {
+        method: "DELETE",
+      });
+
+      const result = (await response.json()) as { error?: string };
+
+      if (!response.ok || result.error) {
+        throw new Error(result.error ?? TEXT.deleteFail);
+      }
+
+      setFiles((current) => current.filter((file) => file.id !== fileId));
+      setAltInputs((current) => {
+        const next = { ...current };
+        delete next[fileId];
+        return next;
+      });
+      removeMediaFromSlots(fileId);
+      setFeedback(TEXT.deleteSuccess);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : TEXT.deleteFail);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function copyLink(url: string) {
     try {
       await navigator.clipboard.writeText(url);
@@ -491,7 +545,7 @@ export function MediaManager({
             <p className="mt-2 text-xs text-slate-400">
               {directUploadEnabled
                 ? "当前为 R2 直传模式，可稳定上传较大的图片与视频文件。"
-                : "当前为本地直传模式，建议单个文件控制在 4MB 内。"}
+                : "当前为本地上传模式，建议单个文件控制在 4MB 内。"}
             </p>
           </div>
         </div>
@@ -758,7 +812,7 @@ export function MediaManager({
                         className="mt-2 h-10"
                       />
                       <p className="mt-2 text-xs text-slate-400">{TEXT.altEmptyHint}</p>
-                      <div className="mt-3 flex justify-end">
+                      <div className="mt-3 flex flex-wrap justify-end gap-2">
                         <Button
                           type="button"
                           variant="outline"
@@ -767,6 +821,15 @@ export function MediaManager({
                           onClick={() => void saveAlt(file.id)}
                         >
                           {savingAltId === file.id ? TEXT.altSaving : TEXT.altSave}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          className="rounded-full"
+                          disabled={deletingId === file.id}
+                          onClick={() => void removeMedia(file.id)}
+                        >
+                          {deletingId === file.id ? TEXT.deleting : TEXT.deleteAction}
                         </Button>
                       </div>
                     </div>

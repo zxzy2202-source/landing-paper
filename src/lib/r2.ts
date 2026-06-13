@@ -1,9 +1,9 @@
 import "@/lib/serverOnly";
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import sharp from "sharp";
 
@@ -62,6 +62,10 @@ export function getPublicAssetUrl(fileKey: string) {
   return `/${fileKey.replace(/\\/g, "/")}`;
 }
 
+export function getLocalAssetPath(fileKey: string) {
+  return path.join(process.cwd(), "public", fileKey);
+}
+
 export async function createPresignedUploadUrl(fileKey: string, contentType: string) {
   const client = getR2Client();
   const bucket = requireEnvValue(env.R2_BUCKET, "R2_BUCKET");
@@ -75,6 +79,26 @@ export async function createPresignedUploadUrl(fileKey: string, contentType: str
     }),
     { expiresIn: 600 },
   );
+}
+
+export async function deleteStoredAsset(fileKey: string) {
+  if (hasR2Config()) {
+    const client = getR2Client();
+    const bucket = requireEnvValue(env.R2_BUCKET, "R2_BUCKET");
+
+    await client.send(
+      new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: fileKey,
+      }),
+    );
+
+    return;
+  }
+
+  await rm(getLocalAssetPath(fileKey), {
+    force: true,
+  });
 }
 
 async function storePublicFile(fileKey: string, body: Buffer) {

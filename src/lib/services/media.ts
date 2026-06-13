@@ -8,6 +8,7 @@ import { getImageSlotByKey, imageSlotRegistry } from "@/lib/imageSlots";
 import {
   createPresignedUploadUrl,
   createUploadDescriptor,
+  deleteStoredAsset,
   getPublicAssetUrl,
   processMediaUpload,
 } from "@/lib/r2";
@@ -215,6 +216,50 @@ export async function updateMediaFileAlt(fileId: string, alt: string) {
   }
 
   return updated;
+}
+
+export async function deleteMediaFile(fileId: string) {
+  const database = requireDatabase();
+  const existing = await database.query.mediaFiles.findFirst({
+    where: eq(mediaFiles.id, fileId),
+    with: {
+      slots: true,
+    },
+  });
+
+  if (!existing) {
+    throw new Error(`Unknown media file: ${fileId}`);
+  }
+
+  await Promise.all(
+    existing.slots.map((slot) =>
+      database
+        .update(imageSlots)
+        .set({
+          mediaFileId: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(imageSlots.id, slot.id)),
+    ),
+  );
+
+  await database.delete(mediaFiles).where(eq(mediaFiles.id, fileId));
+
+  const fileKeys = new Set<string>([existing.fileKey]);
+  if (existing.webpThumbUrl && existing.webpThumbUrl !== existing.url) {
+    const thumbPrefix = `${getPublicAssetUrl("")}`.replace(/\/$/, "");
+    if (existing.webpThumbUrl.startsWith(thumbPrefix)) {
+      const thumbKey = existing.webpThumbUrl.slice(thumbPrefix.length + 1);
+      if (thumbKey) {
+        fileKeys.add(thumbKey);
+      }
+    }
+  }
+
+  await Promise.all(Array.from(fileKeys).map((fileKey) => deleteStoredAsset(fileKey)));
+  safeRevalidateTag(MEDIA_SLOTS_CACHE_TAG);
+
+  return existing;
 }
 
 export async function assignMediaToSlot(
