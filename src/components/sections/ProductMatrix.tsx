@@ -38,7 +38,7 @@ const ProductMatrix = ({
                     {hasVideo ? (
                       <video
                         src={factoryPreviewVideo}
-                        poster={buildMediaProxyUrl(factoryPreviewPoster, 1280)}
+                        poster={buildMediaProxyUrl(factoryPreviewPoster, 720)}
                         className="absolute inset-0 h-full w-full object-cover object-center"
                         muted
                         preload="none"
@@ -195,4 +195,6 @@ const ProductMatrix = ({
 };
 
 export default ProductMatrix;
+
+
 
