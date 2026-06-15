@@ -525,18 +525,85 @@ export function MediaManager({
     setFeedback("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      let result: MediaFileItem & { error?: string };
 
-      const response = await fetch(`/api/admin/slots/${encodeURIComponent(slot.slotKey)}/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      if (directUploadEnabled) {
+        const createResponse = await fetch("/api/admin/media/direct-upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contentType: file.type || "application/octet-stream",
+            fileName: file.name,
+          }),
+        });
 
-      const result = (await response.json()) as MediaFileItem & { error?: string };
+        const createResult = (await createResponse.json()) as {
+          error?: string;
+          fileKey?: string;
+          uploadUrl?: string;
+          url?: string;
+          webpThumbUrl?: string;
+        };
 
-      if (!response.ok || result.error) {
-        throw new Error(result.error ?? TEXT.uploadFail);
+        if (
+          !createResponse.ok ||
+          !createResult.uploadUrl ||
+          !createResult.fileKey ||
+          !createResult.url
+        ) {
+          throw new Error(createResult.error ?? TEXT.uploadFail);
+        }
+
+        const uploadResponse = await fetch(createResult.uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": file.type || "application/octet-stream",
+          },
+          body: file,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`文件上传到对象存储失败（${uploadResponse.status}）。`);
+        }
+
+        const registerResponse = await fetch("/api/admin/media/direct-upload", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contentType: file.type || "application/octet-stream",
+            fileKey: createResult.fileKey,
+            height: 0,
+            size: file.size,
+            slotKey: slot.slotKey,
+            url: createResult.url,
+            webpThumbUrl: createResult.webpThumbUrl || createResult.url,
+            width: 0,
+          }),
+        });
+
+        result = (await registerResponse.json()) as MediaFileItem & { error?: string };
+
+        if (!registerResponse.ok || result.error) {
+          throw new Error(result.error ?? TEXT.uploadFail);
+        }
+      } else {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(`/api/admin/slots/${encodeURIComponent(slot.slotKey)}/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        result = (await response.json()) as MediaFileItem & { error?: string };
+
+        if (!response.ok || result.error) {
+          throw new Error(result.error ?? TEXT.uploadFail);
+        }
       }
 
       setFiles((current) => [result, ...current.filter((item) => item.id !== result.id)]);

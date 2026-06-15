@@ -47,6 +47,33 @@ function buildSlotAlt(slotKey: string, fallbackLabel?: string) {
   return `${slot.label} - ${slot.slotKey}`;
 }
 
+function resolveSlotUpload(slotKey?: string, contentType?: string) {
+  if (!slotKey) {
+    return null;
+  }
+
+  const slot = getImageSlotByKey(slotKey);
+
+  if (!slot) {
+    throw new Error(`Unknown slotKey: ${slotKey}`);
+  }
+
+  if (contentType) {
+    const isImage = contentType.startsWith("image/");
+    const isVideo = contentType.startsWith("video/");
+
+    if (slot.mediaKind === "image" && !isImage) {
+      throw new Error(`Slot ${slotKey} only accepts image uploads.`);
+    }
+
+    if (slot.mediaKind === "video" && !isVideo) {
+      throw new Error(`Slot ${slotKey} only accepts video uploads.`);
+    }
+  }
+
+  return slot;
+}
+
 async function ensureMediaCategory(
   database: ReturnType<typeof requireDatabase>,
   input: {
@@ -223,7 +250,11 @@ export async function registerProcessedDirectUpload(input: {
   width?: number;
 }) {
   const database = requireDatabase();
-  const categoryId = await ensureMediaCategory(database, input);
+  const slot = resolveSlotUpload(input.slotKey, input.contentType);
+  const categoryId = await ensureMediaCategory(database, {
+    categoryName: input.categoryName?.trim() || slot?.label,
+    categorySlug: input.categorySlug?.trim() || slot?.category,
+  });
   const processed = input.contentType.startsWith("image/")
     ? await finalizeDirectUploadedImage(input.fileKey, input.contentType)
     : {
@@ -239,7 +270,7 @@ export async function registerProcessedDirectUpload(input: {
   const [created] = await database
     .insert(mediaFiles)
     .values({
-      alt: input.alt?.trim() || (input.slotKey ? buildSlotAlt(input.slotKey) : ""),
+      alt: input.alt?.trim() || (slot ? buildSlotAlt(slot.slotKey) : ""),
       categoryId,
       fileKey: processed.fileKey,
       height: processed.height,
@@ -251,8 +282,8 @@ export async function registerProcessedDirectUpload(input: {
     })
     .returning();
 
-  if (input.slotKey) {
-    await assignMediaToSlot(input.slotKey, created.id);
+  if (slot) {
+    await assignMediaToSlot(slot.slotKey, created.id);
   }
 
   return created;
@@ -264,17 +295,13 @@ export async function uploadMediaToSlot(input: {
   fileName: string;
   slotKey: string;
 }) {
-  const slot = getImageSlotByKey(input.slotKey);
-
-  if (!slot) {
-    throw new Error(`Unknown slotKey: ${input.slotKey}`);
-  }
+  const slot = resolveSlotUpload(input.slotKey, input.contentType);
 
   const defaultAlt = buildSlotAlt(input.slotKey);
   const media = await uploadMediaFile({
     alt: defaultAlt,
-    categoryName: slot.label,
-    categorySlug: slot.category,
+    categoryName: slot?.label,
+    categorySlug: slot?.category,
     contentType: input.contentType,
     fileBuffer: input.fileBuffer,
     fileName: input.fileName,

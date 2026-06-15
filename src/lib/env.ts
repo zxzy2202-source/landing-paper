@@ -15,7 +15,7 @@ const serverEnvSchema = z.object({
   RESEND_FROM_EMAIL: z.string().email().optional(),
   SERVERCHAN_SENDKEY: z.string().min(1).optional(),
   TURSO_AUTH_TOKEN: z.string().min(1).optional(),
-  TURSO_DATABASE_URL: z.string().url().optional(),
+  TURSO_DATABASE_URL: z.string().min(1).optional(),
 });
 
 const parsedEnv = serverEnvSchema.safeParse(process.env);
