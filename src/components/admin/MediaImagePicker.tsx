@@ -26,6 +26,7 @@ type Props = {
   onChange: (value: string) => void;
   placeholder?: string;
   previewAlt: string;
+  recommendedHint?: string;
   value: string;
 };
 
