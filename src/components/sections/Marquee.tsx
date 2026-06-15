@@ -3,7 +3,7 @@ import React from "react";
 import {
   buildImageSrcSet,
   buildMediaProxyUrl,
-  DEFAULT_HERO_IMAGE_WIDTHS,
+  DEFAULT_SECTION_IMAGE_WIDTHS,
 } from "@/lib/media-url";
 
 type Props = {
