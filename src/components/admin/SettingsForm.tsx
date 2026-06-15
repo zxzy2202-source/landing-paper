@@ -385,11 +385,3 @@ export function SettingsForm({ initialSettings, slots }: Props) {
     </div>
   );
 }
-div>
-    </div>
-  );
-}
-  </div>
-    </div>
-  );
-}
