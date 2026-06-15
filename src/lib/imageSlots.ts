@@ -1,5 +1,13 @@
 export type MediaSlotKind = "image" | "video";
 
+export type ImageProcessingProfile = {
+  fit?: "cover" | "inside";
+  height: number;
+  thumbHeight?: number;
+  thumbWidth?: number;
+  width: number;
+};
+
 export type ImageSlotDefinition = {
   category: string;
   description: string;
@@ -278,6 +286,106 @@ export const imageSlotRegistry: ImageSlotDefinition[] = [
 
 export function getImageSlotByKey(slotKey: string) {
   return imageSlotRegistry.find((slot) => slot.slotKey === slotKey) ?? null;
+}
+
+export function getImageProcessingProfile(
+  slotKey?: string | null,
+): ImageProcessingProfile | null {
+  if (!slotKey) {
+    return null;
+  }
+
+  if (slotKey.startsWith("brand.logo.")) {
+    return {
+      width: 640,
+      height: 240,
+      fit: "inside",
+      thumbWidth: 320,
+      thumbHeight: 120,
+    };
+  }
+
+  if (slotKey.startsWith("hero.")) {
+    return {
+      width: 1920,
+      height: 1200,
+      fit: "cover",
+      thumbWidth: 640,
+      thumbHeight: 400,
+    };
+  }
+
+  if (slotKey === "seo.default.og") {
+    return {
+      width: 1200,
+      height: 630,
+      fit: "cover",
+      thumbWidth: 600,
+      thumbHeight: 315,
+    };
+  }
+
+  if (slotKey === "marquee.default.background") {
+    return {
+      width: 1600,
+      height: 400,
+      fit: "cover",
+      thumbWidth: 640,
+      thumbHeight: 160,
+    };
+  }
+
+  if (slotKey === "about.factory.preview.poster") {
+    return {
+      width: 1280,
+      height: 720,
+      fit: "cover",
+      thumbWidth: 480,
+      thumbHeight: 270,
+    };
+  }
+
+  if (slotKey.startsWith("about.factory.gallery.")) {
+    return {
+      width: 1200,
+      height: 900,
+      fit: "cover",
+      thumbWidth: 400,
+      thumbHeight: 300,
+    };
+  }
+
+  if (slotKey.startsWith("products.showcase.")) {
+    return {
+      width: 960,
+      height: 720,
+      fit: "inside",
+      thumbWidth: 320,
+      thumbHeight: 240,
+    };
+  }
+
+  if (slotKey.startsWith("pain-points.card.")) {
+    return {
+      width: 960,
+      height: 720,
+      fit: "cover",
+      thumbWidth: 320,
+      thumbHeight: 240,
+    };
+  }
+
+  if (slotKey.startsWith("logistics.card.")) {
+    return {
+      width: 960,
+      height: 720,
+      fit: "cover",
+      thumbWidth: 320,
+      thumbHeight: 240,
+    };
+  }
+
+  return null;
 }
 
 export function getImageSlotSeedRows() {

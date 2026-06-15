@@ -9,6 +9,14 @@ import sharp from "sharp";
 
 import { env, hasR2Config, requireEnvValue } from "@/lib/env";
 
+type ImageVariantOptions = {
+  fit?: "cover" | "inside";
+  height?: number;
+  thumbHeight?: number;
+  thumbWidth?: number;
+  width?: number;
+};
+
 function getR2Client() {
   if (!hasR2Config()) {
     throw new Error("R2 is not configured.");
@@ -180,21 +188,72 @@ async function readStoredAsset(fileKey: string) {
   return readFile(getLocalAssetPath(fileKey));
 }
 
-async function buildImageVariants(buffer: Buffer) {
-  const main = sharp(buffer, { failOn: "none" })
-    .rotate()
-    .resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true });
+function applyOutputFormat(
+  instance: sharp.Sharp,
+  contentType: string,
+) {
+  if (contentType === "image/jpeg" || contentType === "image/jpg") {
+    return instance.jpeg({ quality: 82, mozjpeg: true });
+  }
 
-  const thumb = sharp(buffer, { failOn: "none" })
-    .rotate()
-    .resize({ width: 400, height: 400, fit: "inside", withoutEnlargement: true })
+  if (contentType === "image/png") {
+    return instance.png({
+      compressionLevel: 9,
+      palette: true,
+      quality: 80,
+    });
+  }
+
+  if (contentType === "image/webp") {
+    return instance.webp({ quality: 82 });
+  }
+
+  if (contentType === "image/avif") {
+    return instance.avif({ quality: 60 });
+  }
+
+  return instance.webp({ quality: 82 });
+}
+
+async function buildImageVariants(
+  buffer: Buffer,
+  contentType: string,
+  options?: ImageVariantOptions,
+) {
+  const fit = options?.fit ?? "inside";
+  const resizeWidth = options?.width ?? 1600;
+  const resizeHeight = options?.height ?? 1200;
+  const thumbWidth = options?.thumbWidth ?? Math.min(resizeWidth, 400);
+  const thumbHeight = options?.thumbHeight ?? Math.min(resizeHeight, 300);
+
+  const base = sharp(buffer, { failOn: "none" }).rotate();
+  const mainPipeline = applyOutputFormat(
+    base.clone().resize({
+      width: resizeWidth,
+      height: resizeHeight,
+      fit,
+      position: "centre",
+      withoutEnlargement: true,
+    }),
+    contentType,
+  );
+
+  const thumbPipeline = base
+    .clone()
+    .resize({
+      width: thumbWidth,
+      height: thumbHeight,
+      fit,
+      position: "centre",
+      withoutEnlargement: true,
+    })
     .webp({ quality: 78 });
 
-  const [mainResult, thumbResult, metadata] = await Promise.all([
-    main.toBuffer(),
-    thumb.toBuffer(),
-    sharp(buffer).metadata(),
+  const [mainResult, thumbResult] = await Promise.all([
+    mainPipeline.toBuffer(),
+    thumbPipeline.toBuffer(),
   ]);
+  const metadata = await sharp(mainResult, { failOn: "none" }).metadata();
 
   return {
     height: metadata.height ?? 0,
@@ -205,10 +264,14 @@ async function buildImageVariants(buffer: Buffer) {
   };
 }
 
-export async function finalizeDirectUploadedImage(fileKey: string, contentType: string) {
+export async function finalizeDirectUploadedImage(
+  fileKey: string,
+  contentType: string,
+  options?: ImageVariantOptions,
+) {
   const buffer = await readStoredAsset(fileKey);
   const thumbKey = getThumbKeyForFileKey(fileKey);
-  const variants = await buildImageVariants(buffer);
+  const variants = await buildImageVariants(buffer, contentType, options);
   const [url, webpThumbUrl] = await Promise.all([
     uploadAsset(fileKey, variants.mainResult, contentType),
     uploadAsset(thumbKey, variants.thumbResult, "image/webp"),
@@ -230,14 +293,15 @@ export async function processMediaUpload(
   fileName: string,
   contentType: string,
   buffer: Buffer,
+  options?: ImageVariantOptions,
 ) {
-  const { assetExt, fileKey, safeName, thumbKey } = createUploadDescriptor(
+  const { fileKey, thumbKey } = createUploadDescriptor(
     fileName,
     contentType,
   );
 
   if (contentType.startsWith("image/")) {
-    const variants = await buildImageVariants(buffer);
+    const variants = await buildImageVariants(buffer, contentType, options);
 
     const [url, webpThumbUrl] = await Promise.all([
       uploadAsset(fileKey, variants.mainResult, contentType),

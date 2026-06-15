@@ -5,7 +5,11 @@ import { and, desc, eq } from "drizzle-orm";
 import { safeRevalidateTag } from "@/lib/cacheRevalidate";
 import { db, requireDatabase } from "@/lib/db/client";
 import { imageSlots, mediaCategories, mediaFiles } from "@/lib/db/schema";
-import { getImageSlotByKey, imageSlotRegistry } from "@/lib/imageSlots";
+import {
+  getImageProcessingProfile,
+  getImageSlotByKey,
+  imageSlotRegistry,
+} from "@/lib/imageSlots";
 import {
   createPresignedUploadUrl,
   createUploadDescriptor,
@@ -159,12 +163,15 @@ export async function uploadMediaFile(input: {
   contentType: string;
   fileName: string;
   fileBuffer: Buffer;
+  slotKey?: string;
 }) {
   const database = requireDatabase();
+  const imageProfile = getImageProcessingProfile(input.slotKey);
   const upload = await processMediaUpload(
     input.fileName,
     input.contentType,
     input.fileBuffer,
+    imageProfile ?? undefined,
   );
   const categoryId = await ensureMediaCategory(database, input);
 
@@ -255,8 +262,13 @@ export async function registerProcessedDirectUpload(input: {
     categoryName: input.categoryName?.trim() || slot?.label,
     categorySlug: input.categorySlug?.trim() || slot?.category,
   });
+  const imageProfile = getImageProcessingProfile(slot?.slotKey);
   const processed = input.contentType.startsWith("image/")
-    ? await finalizeDirectUploadedImage(input.fileKey, input.contentType)
+    ? await finalizeDirectUploadedImage(
+        input.fileKey,
+        input.contentType,
+        imageProfile ?? undefined,
+      )
     : {
         fileKey: input.fileKey,
         height: input.height ?? 0,
@@ -305,6 +317,7 @@ export async function uploadMediaToSlot(input: {
     contentType: input.contentType,
     fileBuffer: input.fileBuffer,
     fileName: input.fileName,
+    slotKey: input.slotKey,
   });
 
   await assignMediaToSlot(input.slotKey, media.id);
