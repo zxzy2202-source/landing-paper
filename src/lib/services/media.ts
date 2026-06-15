@@ -171,6 +171,7 @@ export async function uploadMediaFile(input: {
     input.fileName,
     input.contentType,
     input.fileBuffer,
+    input.slotKey,
     imageProfile ?? undefined,
   );
   const categoryId = await ensureMediaCategory(database, input);

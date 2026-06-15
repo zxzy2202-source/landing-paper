@@ -37,7 +37,7 @@ function sanitizeBaseName(fileName: string) {
   const parsed = path.parse(fileName);
   const baseName = parsed.name || "asset";
   const ext = parsed.ext.toLowerCase().replace(/[^a-z0-9.]/g, "");
-  const safeName = `${Date.now()}-${baseName}`.replace(/[^a-zA-Z0-9-_]/g, "-");
+  const safeName = baseName.replace(/[^a-zA-Z0-9-_]/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "") || "asset";
 
   return {
     ext,
@@ -54,17 +54,37 @@ function sanitizePathSegment(value: string) {
     .replace(/^-+|-+$/g, "") || "slot";
 }
 
-function buildSlotDirectory(slotKey?: string) {
-  if (!slotKey) {
-    return "uploads/library";
-  }
+function getUploadDateSegments(date = new Date()) {
+  return {
+    month: String(date.getMonth() + 1).padStart(2, "0"),
+    year: String(date.getFullYear()),
+  };
+}
 
-  const slotPath = slotKey
+function buildSlotSlug(slotKey: string) {
+  return slotKey
     .split(".")
     .map((segment) => sanitizePathSegment(segment))
-    .join("/");
+    .join("-");
+}
 
-  return `uploads/slots/${slotPath}`;
+function buildUploadDirectory(options?: {
+  date?: Date;
+  temporary?: boolean;
+}) {
+  const { month, year } = getUploadDateSegments(options?.date);
+  const prefix = options?.temporary ? "wp-content/uploads/tmp" : "wp-content/uploads";
+
+  return `${prefix}/${year}/${month}`;
+}
+
+function buildUploadBaseName(fileName: string, slotKey?: string) {
+  if (slotKey) {
+    return `${buildSlotSlug(slotKey)}-${Date.now()}`;
+  }
+
+  const { safeName } = sanitizeBaseName(fileName);
+  return `library-${Date.now()}-${safeName}`;
 }
 
 export function createUploadDescriptor(
@@ -72,23 +92,26 @@ export function createUploadDescriptor(
   contentType: string,
   slotKey?: string,
 ) {
-  const { ext, safeName } = sanitizeBaseName(fileName);
+  const { ext } = sanitizeBaseName(fileName);
   const assetExt = ext || (contentType.startsWith("video/") ? ".mp4" : ".bin");
   const processedExt = contentType.startsWith("image/") ? ".webp" : assetExt;
-  const baseDirectory = buildSlotDirectory(slotKey);
-  const processedFileKey = `${baseDirectory}/${safeName}${processedExt}`;
+  const baseDirectory = buildUploadDirectory();
+  const tempDirectory = buildUploadDirectory({ temporary: true });
+  const baseName = buildUploadBaseName(fileName, slotKey);
+  const processedFileKey = `${baseDirectory}/${baseName}${processedExt}`;
   const fileKey = contentType.startsWith("image/")
-    ? `uploads/tmp/${baseDirectory.replace(/^uploads\//, "")}/${safeName}${assetExt}`
+    ? `${tempDirectory}/${baseName}${assetExt}`
     : processedFileKey;
 
   return {
     assetExt,
     baseDirectory,
+    baseName,
     fileKey,
     processedFileKey,
-    safeName,
+    safeName: baseName,
     thumbKey: contentType.startsWith("image/")
-      ? `${baseDirectory}/${safeName}-thumb.webp`
+      ? `${baseDirectory}/${baseName}-thumb.webp`
       : fileKey,
   };
 }
@@ -115,7 +138,9 @@ export function getThumbKeyForFileKey(fileKey: string) {
 }
 
 function getProcessedFileKey(fileKey: string, contentType?: string) {
-  const baseKey = fileKey.replace(/^uploads\/tmp\//, "uploads/");
+  const baseKey = fileKey
+    .replace(/^wp-content\/uploads\/tmp\//, "wp-content/uploads/")
+    .replace(/^uploads\/tmp\//, "uploads/");
 
   if (contentType?.startsWith("image/")) {
     return baseKey.replace(/\.[^.]+$/, ".webp");
@@ -324,11 +349,13 @@ export async function processMediaUpload(
   fileName: string,
   contentType: string,
   buffer: Buffer,
+  slotKey?: string,
   options?: ImageVariantOptions,
 ) {
   const { fileKey, processedFileKey, thumbKey } = createUploadDescriptor(
     fileName,
     contentType,
+    slotKey,
   );
 
   if (contentType.startsWith("image/")) {
