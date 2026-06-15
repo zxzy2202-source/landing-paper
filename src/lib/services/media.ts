@@ -196,8 +196,13 @@ export async function uploadMediaFile(input: {
 export async function createDirectUpload(input: {
   contentType: string;
   fileName: string;
+  slotKey?: string;
 }) {
-  const descriptor = createUploadDescriptor(input.fileName, input.contentType);
+  const descriptor = createUploadDescriptor(
+    input.fileName,
+    input.contentType,
+    input.slotKey,
+  );
   const uploadUrl = await createPresignedUploadUrl(descriptor.fileKey, input.contentType);
 
   return {

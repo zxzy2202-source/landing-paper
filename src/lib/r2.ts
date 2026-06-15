@@ -45,21 +45,51 @@ function sanitizeBaseName(fileName: string) {
   };
 }
 
-export function createUploadDescriptor(fileName: string, contentType: string) {
+function sanitizePathSegment(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "") || "slot";
+}
+
+function buildSlotDirectory(slotKey?: string) {
+  if (!slotKey) {
+    return "uploads/library";
+  }
+
+  const slotPath = slotKey
+    .split(".")
+    .map((segment) => sanitizePathSegment(segment))
+    .join("/");
+
+  return `uploads/slots/${slotPath}`;
+}
+
+export function createUploadDescriptor(
+  fileName: string,
+  contentType: string,
+  slotKey?: string,
+) {
   const { ext, safeName } = sanitizeBaseName(fileName);
   const assetExt = ext || (contentType.startsWith("video/") ? ".mp4" : ".bin");
   const processedExt = contentType.startsWith("image/") ? ".webp" : assetExt;
-  const processedFileKey = `uploads/${safeName}${processedExt}`;
+  const baseDirectory = buildSlotDirectory(slotKey);
+  const processedFileKey = `${baseDirectory}/${safeName}${processedExt}`;
   const fileKey = contentType.startsWith("image/")
-    ? `uploads/tmp/${safeName}${assetExt}`
+    ? `uploads/tmp/${baseDirectory.replace(/^uploads\//, "")}/${safeName}${assetExt}`
     : processedFileKey;
 
   return {
     assetExt,
+    baseDirectory,
     fileKey,
     processedFileKey,
     safeName,
-    thumbKey: contentType.startsWith("image/") ? `uploads/${safeName}-thumb.webp` : fileKey,
+    thumbKey: contentType.startsWith("image/")
+      ? `${baseDirectory}/${safeName}-thumb.webp`
+      : fileKey,
   };
 }
 

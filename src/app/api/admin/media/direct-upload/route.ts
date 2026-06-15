@@ -8,6 +8,7 @@ import { createDirectUpload, registerProcessedDirectUpload } from "@/lib/service
 const createUploadSchema = z.object({
   contentType: z.string().min(1),
   fileName: z.string().min(1).max(255),
+  slotKey: z.string().max(255).optional(),
 });
 
 const completeUploadSchema = z.object({

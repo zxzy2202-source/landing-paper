@@ -536,6 +536,7 @@ export function MediaManager({
           body: JSON.stringify({
             contentType: file.type || "application/octet-stream",
             fileName: file.name,
+            slotKey: slot.slotKey,
           }),
         });
 
