@@ -44,6 +44,9 @@ auth
 auth-wal
 db
 db-wal
+!src/lib/db/
+!src/lib/db/client.ts
+!src/lib/db/schema.ts
 
 # typescript
 *.tsbuildinfo
