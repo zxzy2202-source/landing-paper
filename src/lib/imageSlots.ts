@@ -342,23 +342,23 @@ export function getImageProcessingProfile(
 
   if (slotKey === "about.factory.preview.poster") {
     return {
-      width: 1280,
-      height: 720,
+      width: 960,
+      height: 540,
       fit: "cover",
-      quality: 72,
-      thumbWidth: 480,
-      thumbHeight: 270,
+      quality: 68,
+      thumbWidth: 400,
+      thumbHeight: 225,
     };
   }
 
   if (slotKey.startsWith("about.factory.gallery.")) {
     return {
-      width: 1080,
-      height: 810,
+      width: 720,
+      height: 540,
       fit: "cover",
-      quality: 72,
-      thumbWidth: 400,
-      thumbHeight: 300,
+      quality: 68,
+      thumbWidth: 240,
+      thumbHeight: 180,
     };
   }
 

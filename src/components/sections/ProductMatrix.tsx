@@ -176,9 +176,9 @@ const ProductMatrix = ({
                   className="aspect-[4/3] overflow-hidden rounded-xl border border-gray-100 bg-gray-100 shadow-sm"
                 >
                   <img
-                    src={buildMediaProxyUrl(src, 640)}
+                    src={buildMediaProxyUrl(src, 320)}
                     srcSet={buildImageSrcSet(src, DEFAULT_CARD_IMAGE_WIDTHS)}
-                    sizes="(min-width: 768px) 25vw, 50vw"
+                    sizes="(min-width: 768px) 22vw, 44vw"
                     alt={`Factory gallery ${index + 1}`}
                     loading="lazy"
                     decoding="async"
@@ -195,3 +195,4 @@ const ProductMatrix = ({
 };
 
 export default ProductMatrix;
+
