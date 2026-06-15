@@ -154,7 +154,3 @@ export function MediaImagePicker({
     </div>
   );
 }
-  </div>
-    </div>
-  );
-}
