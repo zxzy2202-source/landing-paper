@@ -50,12 +50,19 @@ export function MediaImagePicker({
   return (
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <label className="text-sm font-medium text-slate-700">{label}</label>
-          {description ? (
-            <p className="mt-1 text-sm text-slate-500">{description}</p>
-          ) : null}
-        </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">{label}</label>
+            {description ? (
+              <p className="mt-1 text-sm text-slate-500">{description}</p>
+            ) : null}
+            {recommendedHint ? (
+              <p className="mt-1 text-xs font-medium text-blue-600">建议规格：{recommendedHint}</p>
+            ) : null}
+            <p className="mt-1 text-xs text-amber-600">
+              正式上线资源建议只使用媒体库素材，避免外链大图绕过压缩与缓存策略。
+            </p>
+          </div>
+
         {value ? (
           <Button
             type="button"

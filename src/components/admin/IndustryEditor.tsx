@@ -113,6 +113,7 @@ function IndustryEditorForm({
         label="Hero 图片"
         description="这张图会直接用于前台行业页头图区域，同时会同步写入下方 JSON 的 heroImageUrl 字段。"
         previewAlt={selected.title || "行业页 Hero 图预览"}
+        recommendedHint="建议使用媒体库上传后的 16:9 横图，优先控制在 960×540 或相近规格。"
         value={heroImageUrl}
         onChange={handleHeroImageChange}
         emptyLabel="不使用 Hero 图片"

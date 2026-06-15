@@ -1187,6 +1187,9 @@ export function MediaManager({
                               </p>
                               <p className="mt-2 text-sm text-slate-700">{outputSummary.main}</p>
                               <p className="mt-1 text-xs text-slate-400">{outputSummary.secondary}</p>
+                              <p className="mt-2 text-xs text-blue-600">
+                                建议优先上传并绑定媒体库素材，避免外链图片绕过压缩与缓存。
+                              </p>
                             </div>
                             <div className="rounded-2xl border border-slate-200 bg-white p-3">
                               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">

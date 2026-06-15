@@ -363,6 +363,9 @@ export function SettingsForm({ initialSettings, slots }: Props) {
               <p className="mt-2 text-xs text-slate-500">
                 该槽位会直接影响前台对应位置显示。
               </p>
+              <p className="mt-2 text-xs text-blue-600">
+                建议优先通过槽位绑定媒体库素材，不要长期依赖回退外链。
+              </p>
             </div>
           ))}
         </div>
@@ -379,6 +382,14 @@ export function SettingsForm({ initialSettings, slots }: Props) {
         </Button>
         {feedback ? <p className="text-sm text-slate-600">{feedback}</p> : null}
       </div>
+    </div>
+  );
+}
+div>
+    </div>
+  );
+}
+  </div>
     </div>
   );
 }
