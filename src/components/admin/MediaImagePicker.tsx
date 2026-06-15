@@ -40,10 +40,12 @@ export function MediaImagePicker({
   inputName,
   label,
   onChange,
-  placeholder = "可直接粘贴图片链接，或从下方媒体库选择",
+  placeholder = "优先从下方媒体库选择，不建议直接粘贴外链图片",
   previewAlt,
+  recommendedHint,
   value,
 }: Props) {
+
   const currentFile = files.find((file) => file.url === value) ?? null;
   const selectValue = currentFile ? currentFile.url : "";
 
@@ -149,6 +151,10 @@ export function MediaImagePicker({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+  </div>
     </div>
   );
 }

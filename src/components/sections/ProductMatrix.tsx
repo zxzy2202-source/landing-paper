@@ -47,9 +47,9 @@ const ProductMatrix = ({
                       />
                     ) : (
                       <img
-                        src={buildMediaProxyUrl(factoryPreviewPoster, 1280)}
+                        src={buildMediaProxyUrl(factoryPreviewPoster, 720)}
                         srcSet={buildImageSrcSet(factoryPreviewPoster, DEFAULT_SECTION_IMAGE_WIDTHS)}
-                        sizes="(min-width: 1024px) 42vw, 100vw"
+                        sizes="(min-width: 1024px) 42vw, 88vw"
                         alt="Zhixinpaper factory preview"
                         loading="lazy"
                         decoding="async"
