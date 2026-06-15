@@ -49,6 +49,7 @@ export function buildMetadataFromSeo(
 ): Metadata {
   const baseUrl = new URL(seo.canonicalUrl);
   const url = pathname === "/" ? baseUrl : new URL(pathname, baseUrl);
+  const ogImageUrl = new URL(buildMediaProxyUrl(seo.ogImage, 1200), baseUrl).toString();
 
   return {
     title: seo.title,
@@ -66,7 +67,7 @@ export function buildMetadataFromSeo(
       url: url.toString(),
       images: [
         {
-          url: seo.ogImage,
+          url: ogImageUrl,
           alt: seo.title,
         },
       ],
@@ -75,11 +76,7 @@ export function buildMetadataFromSeo(
       card: "summary_large_image",
       title: seo.title,
       description: seo.description,
-      images: [seo.ogImage],
-    },
-  };
-}
-ges: [ogImageUrl],
+      images: [ogImageUrl],
     },
   };
 }
