@@ -60,7 +60,7 @@ function normalizeWidth(value: string | null) {
 
 async function transformImage(buffer: Buffer, width: number, contentType: string) {
   if (!width || !contentType.startsWith("image/")) {
-    return { body: buffer, contentType };
+    return { body: new Uint8Array(buffer), contentType };
   }
 
   const transformed = await sharp(buffer, { failOn: "none" })
@@ -73,7 +73,7 @@ async function transformImage(buffer: Buffer, width: number, contentType: string
     .toBuffer();
 
   return {
-    body: transformed,
+    body: new Uint8Array(transformed),
     contentType: "image/webp",
   };
 }
