@@ -31,7 +31,7 @@ function isVideoLikeUrl(url: string) {
 const TrustSection = ({ backgroundMedia }: Props) => {
   const isVideo = isVideoLikeUrl(backgroundMedia);
   const backgroundImage = buildMediaProxyUrl(backgroundMedia, 1440);
-  const backgroundImageSrcSet = buildImageSrcSet(backgroundMedia, DEFAULT_HERO_IMAGE_WIDTHS);
+  const backgroundImageSrcSet = buildImageSrcSet(backgroundMedia, DEFAULT_SECTION_IMAGE_WIDTHS);
 
   return (
     <section id="trust" className="relative overflow-hidden bg-slate-950">
