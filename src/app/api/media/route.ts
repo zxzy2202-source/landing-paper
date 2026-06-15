@@ -69,7 +69,7 @@ async function transformImage(buffer: Buffer, width: number, contentType: string
       width,
       withoutEnlargement: true,
     })
-    .webp({ quality: 74 })
+    .webp({ quality: width >= 1200 ? 68 : width >= 720 ? 70 : 72 })
     .toBuffer();
 
   return {

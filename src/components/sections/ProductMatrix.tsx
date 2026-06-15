@@ -6,7 +6,7 @@ import {
   buildImageSrcSet,
   buildMediaProxyUrl,
   DEFAULT_CARD_IMAGE_WIDTHS,
-  DEFAULT_HERO_IMAGE_WIDTHS,
+  DEFAULT_SECTION_IMAGE_WIDTHS,
 } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
 

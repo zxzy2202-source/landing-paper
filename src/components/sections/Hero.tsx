@@ -27,7 +27,7 @@ const Hero = ({ hero }: Props) => {
         <img
           src={heroSrc}
           srcSet={heroSrcSet}
-          sizes="100vw"
+          sizes="(min-width: 1024px) 100vw, 100vw"
           alt=""
           aria-hidden="true"
           loading="eager"
