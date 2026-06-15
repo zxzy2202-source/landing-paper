@@ -203,10 +203,10 @@ export async function createDirectUpload(input: {
   return {
     fileKey: descriptor.fileKey,
     uploadUrl,
-    url: getPublicAssetUrl(descriptor.fileKey),
+    url: getPublicAssetUrl(descriptor.processedFileKey),
     webpThumbUrl: input.contentType.startsWith("image/")
       ? getPublicAssetUrl(descriptor.thumbKey)
-      : getPublicAssetUrl(descriptor.fileKey),
+      : getPublicAssetUrl(descriptor.processedFileKey),
   };
 }
 

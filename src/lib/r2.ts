@@ -47,11 +47,15 @@ function sanitizeBaseName(fileName: string) {
 export function createUploadDescriptor(fileName: string, contentType: string) {
   const { ext, safeName } = sanitizeBaseName(fileName);
   const assetExt = ext || (contentType.startsWith("video/") ? ".mp4" : ".bin");
-  const fileKey = `uploads/${safeName}${assetExt}`;
+  const processedFileKey = `uploads/${safeName}${assetExt}`;
+  const fileKey = contentType.startsWith("image/")
+    ? `uploads/tmp/${safeName}${assetExt}`
+    : processedFileKey;
 
   return {
     assetExt,
     fileKey,
+    processedFileKey,
     safeName,
     thumbKey: contentType.startsWith("image/") ? `uploads/${safeName}-thumb.webp` : fileKey,
   };
@@ -76,6 +80,10 @@ export function getLocalAssetPath(fileKey: string) {
 
 export function getThumbKeyForFileKey(fileKey: string) {
   return fileKey.replace(/\.[^.]+$/, "") + "-thumb.webp";
+}
+
+function getProcessedFileKey(fileKey: string) {
+  return fileKey.replace(/^uploads\/tmp\//, "uploads/");
 }
 
 export async function createPresignedUploadUrl(fileKey: string, contentType: string) {
@@ -270,15 +278,20 @@ export async function finalizeDirectUploadedImage(
   options?: ImageVariantOptions,
 ) {
   const buffer = await readStoredAsset(fileKey);
-  const thumbKey = getThumbKeyForFileKey(fileKey);
+  const processedFileKey = getProcessedFileKey(fileKey);
+  const thumbKey = getThumbKeyForFileKey(processedFileKey);
   const variants = await buildImageVariants(buffer, contentType, options);
   const [url, webpThumbUrl] = await Promise.all([
-    uploadAsset(fileKey, variants.mainResult, contentType),
+    uploadAsset(processedFileKey, variants.mainResult, contentType),
     uploadAsset(thumbKey, variants.thumbResult, "image/webp"),
   ]);
 
+  if (processedFileKey !== fileKey) {
+    await deleteStoredAsset(fileKey).catch(() => {});
+  }
+
   return {
-    fileKey,
+    fileKey: processedFileKey,
     height: variants.height,
     mimeType: contentType,
     size: variants.size,
@@ -295,7 +308,7 @@ export async function processMediaUpload(
   buffer: Buffer,
   options?: ImageVariantOptions,
 ) {
-  const { fileKey, thumbKey } = createUploadDescriptor(
+  const { fileKey, processedFileKey, thumbKey } = createUploadDescriptor(
     fileName,
     contentType,
   );
@@ -304,12 +317,12 @@ export async function processMediaUpload(
     const variants = await buildImageVariants(buffer, contentType, options);
 
     const [url, webpThumbUrl] = await Promise.all([
-      uploadAsset(fileKey, variants.mainResult, contentType),
+      uploadAsset(processedFileKey, variants.mainResult, contentType),
       uploadAsset(thumbKey, variants.thumbResult, "image/webp"),
     ]);
 
     return {
-      fileKey,
+      fileKey: processedFileKey,
       height: variants.height,
       mimeType: contentType,
       size: variants.size,
