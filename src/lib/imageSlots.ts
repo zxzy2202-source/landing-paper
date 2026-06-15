@@ -3,6 +3,7 @@ export type MediaSlotKind = "image" | "video";
 export type ImageProcessingProfile = {
   fit?: "cover" | "inside";
   height: number;
+  quality?: number;
   thumbHeight?: number;
   thumbWidth?: number;
   width: number;
@@ -297,21 +298,23 @@ export function getImageProcessingProfile(
 
   if (slotKey.startsWith("brand.logo.")) {
     return {
-      width: 640,
-      height: 240,
+      width: 480,
+      height: 180,
       fit: "inside",
-      thumbWidth: 320,
-      thumbHeight: 120,
+      quality: 82,
+      thumbWidth: 240,
+      thumbHeight: 90,
     };
   }
 
   if (slotKey.startsWith("hero.")) {
     return {
-      width: 1920,
-      height: 1200,
+      width: 1600,
+      height: 900,
       fit: "cover",
+      quality: 68,
       thumbWidth: 640,
-      thumbHeight: 400,
+      thumbHeight: 360,
     };
   }
 
@@ -320,6 +323,7 @@ export function getImageProcessingProfile(
       width: 1200,
       height: 630,
       fit: "cover",
+      quality: 72,
       thumbWidth: 600,
       thumbHeight: 315,
     };
@@ -327,9 +331,10 @@ export function getImageProcessingProfile(
 
   if (slotKey === "marquee.default.background") {
     return {
-      width: 1600,
-      height: 400,
+      width: 1440,
+      height: 360,
       fit: "cover",
+      quality: 66,
       thumbWidth: 640,
       thumbHeight: 160,
     };
@@ -340,6 +345,7 @@ export function getImageProcessingProfile(
       width: 1280,
       height: 720,
       fit: "cover",
+      quality: 72,
       thumbWidth: 480,
       thumbHeight: 270,
     };
@@ -347,9 +353,10 @@ export function getImageProcessingProfile(
 
   if (slotKey.startsWith("about.factory.gallery.")) {
     return {
-      width: 1200,
-      height: 900,
+      width: 1080,
+      height: 810,
       fit: "cover",
+      quality: 72,
       thumbWidth: 400,
       thumbHeight: 300,
     };
@@ -357,31 +364,34 @@ export function getImageProcessingProfile(
 
   if (slotKey.startsWith("products.showcase.")) {
     return {
-      width: 960,
-      height: 720,
+      width: 900,
+      height: 675,
       fit: "inside",
-      thumbWidth: 320,
-      thumbHeight: 240,
+      quality: 74,
+      thumbWidth: 300,
+      thumbHeight: 225,
     };
   }
 
   if (slotKey.startsWith("pain-points.card.")) {
     return {
-      width: 960,
-      height: 720,
+      width: 900,
+      height: 675,
       fit: "cover",
-      thumbWidth: 320,
-      thumbHeight: 240,
+      quality: 74,
+      thumbWidth: 300,
+      thumbHeight: 225,
     };
   }
 
   if (slotKey.startsWith("logistics.card.")) {
     return {
-      width: 960,
-      height: 720,
+      width: 900,
+      height: 675,
       fit: "cover",
-      thumbWidth: 320,
-      thumbHeight: 240,
+      quality: 74,
+      thumbWidth: 300,
+      thumbHeight: 225,
     };
   }
 
