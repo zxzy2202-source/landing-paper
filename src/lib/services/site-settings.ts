@@ -3,6 +3,7 @@ import "@/lib/serverOnly";
 import { unstable_cache } from "next/cache";
 import { eq } from "drizzle-orm";
 
+import { buildMediaProxyUrl } from "@/lib/media-url";
 import { safeRevalidateTag } from "@/lib/cacheRevalidate";
 import { db, requireDatabase } from "@/lib/db/client";
 import { siteSettings } from "@/lib/db/schema";
@@ -47,7 +48,11 @@ const loadPublicMediaSlots = unstable_cache(
         const bound = slotRowMap.get(slot.slotKey);
         return [
           slot.slotKey,
-          pickNonEmpty(bound?.mediaFile?.url, bound?.fallbackUrl, slot.fallbackUrl),
+          slot.mediaKind === "image"
+            ? buildMediaProxyUrl(
+                pickNonEmpty(bound?.mediaFile?.url, bound?.fallbackUrl, slot.fallbackUrl),
+              )
+            : pickNonEmpty(bound?.mediaFile?.url, bound?.fallbackUrl, slot.fallbackUrl),
         ];
       }),
     ) as PublicMediaSlotMap;
