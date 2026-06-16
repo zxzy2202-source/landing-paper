@@ -1,12 +1,12 @@
 import React from "react";
 import Link from "next/link";
 
+import { getPublicMediaSlots } from "@/lib/services/site-settings";
 import {
   buildImageSrcSet,
   buildMediaProxyUrl,
   DEFAULT_LOGO_IMAGE_WIDTHS,
 } from "@/lib/media-url";
-import { getPublicMediaSlots } from "@/lib/services/site-settings";
 
 const PRODUCTS_SECTION_HREF = "/#x";
 
@@ -24,7 +24,9 @@ const Footer = async () => {
           <div className="lg:col-span-4">
             <div className="mb-6 inline-flex rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-white/10">
               <img
-                src={logoUrl}
+                src={buildMediaProxyUrl(logoUrl, 320)}
+                srcSet={buildImageSrcSet(logoUrl, DEFAULT_LOGO_IMAGE_WIDTHS)}
+                sizes="160px"
                 alt="Zhixinpaper Logo"
                 loading="lazy"
                 decoding="async"
@@ -181,5 +183,4 @@ const Footer = async () => {
   );
 };
 
-export default Footer;
 export default Footer;

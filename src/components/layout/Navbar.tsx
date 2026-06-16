@@ -2,6 +2,11 @@ import React from "react";
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
+import {
+  buildImageSrcSet,
+  buildMediaProxyUrl,
+  DEFAULT_LOGO_IMAGE_WIDTHS,
+} from "@/lib/media-url";
 import { getPublicMediaSlots } from "@/lib/services/site-settings";
 import { cn } from "@/lib/utils";
 
@@ -68,4 +73,3 @@ const Navbar = async () => {
 };
 
 export default Navbar;
- default Navbar;
