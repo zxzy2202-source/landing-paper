@@ -23,11 +23,12 @@ const Navbar = async () => {
       <div className="container mx-auto flex w-full items-center justify-between px-4 lg:px-8">
         <a href={NAV_LINKS.home} className="flex-shrink-0">
           <img
-            src={logoUrl}
+            src={buildMediaProxyUrl(logoUrl, 320)}
+            srcSet={buildImageSrcSet(logoUrl, DEFAULT_LOGO_IMAGE_WIDTHS)}
+            sizes="160px"
             alt="Zhixinpaper Logo"
             loading="eager"
             decoding="async"
-            fetchPriority="high"
             className="h-auto max-h-12 w-auto cursor-pointer object-contain transition-transform duration-300 hover:scale-105 md:max-h-16"
           />
         </a>
@@ -67,3 +68,4 @@ const Navbar = async () => {
 };
 
 export default Navbar;
+ default Navbar;

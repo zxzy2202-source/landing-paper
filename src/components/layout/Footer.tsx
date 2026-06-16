@@ -1,6 +1,11 @@
 import React from "react";
 import Link from "next/link";
 
+import {
+  buildImageSrcSet,
+  buildMediaProxyUrl,
+  DEFAULT_LOGO_IMAGE_WIDTHS,
+} from "@/lib/media-url";
 import { getPublicMediaSlots } from "@/lib/services/site-settings";
 
 const PRODUCTS_SECTION_HREF = "/#x";
@@ -176,4 +181,5 @@ const Footer = async () => {
   );
 };
 
+export default Footer;
 export default Footer;

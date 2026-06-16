@@ -18,7 +18,9 @@ const Hero = ({ hero }: Props) => {
     <header id="n" className="relative flex min-h-[68svh] items-center overflow-hidden bg-slate-950 sm:min-h-[74svh] lg:min-h-[80vh]">
       <div className="absolute inset-0">
         <img
-          src={hero.backgroundImage}
+          src={heroSrc}
+          srcSet={heroSrcSet}
+          sizes="100vw"
           alt=""
           aria-hidden="true"
           loading="eager"
@@ -66,6 +68,15 @@ const Hero = ({ hero }: Props) => {
                 {hero.secondaryCtaLabel}
               </a>
             </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Hero;
+        </div>
           </div>
         </div>
       </div>
