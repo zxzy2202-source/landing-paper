@@ -4,11 +4,6 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { getPublicMediaSlots } from "@/lib/services/site-settings";
 import { cn } from "@/lib/utils";
-import {
-  buildImageSrcSet,
-  buildMediaProxyUrl,
-  DEFAULT_LOGO_IMAGE_WIDTHS,
-} from "@/lib/media-url";
 
 const NAV_LINKS = {
   contact: "/#contact",
@@ -28,12 +23,11 @@ const Navbar = async () => {
       <div className="container mx-auto flex w-full items-center justify-between px-4 lg:px-8">
         <a href={NAV_LINKS.home} className="flex-shrink-0">
           <img
-            src={buildMediaProxyUrl(logoUrl, 320)}
-            srcSet={buildImageSrcSet(logoUrl, DEFAULT_LOGO_IMAGE_WIDTHS)}
-            sizes="160px"
+            src={logoUrl}
             alt="Zhixinpaper Logo"
             loading="eager"
             decoding="async"
+            fetchPriority="high"
             className="h-auto max-h-12 w-auto cursor-pointer object-contain transition-transform duration-300 hover:scale-105 md:max-h-16"
           />
         </a>
