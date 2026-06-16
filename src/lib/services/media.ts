@@ -199,10 +199,12 @@ export async function createDirectUpload(input: {
   fileName: string;
   slotKey?: string;
 }) {
+  const imageProfile = getImageProcessingProfile(input.slotKey);
   const descriptor = createUploadDescriptor(
     input.fileName,
     input.contentType,
     input.slotKey,
+    imageProfile ?? undefined,
   );
   const uploadUrl = await createPresignedUploadUrl(descriptor.fileKey, input.contentType);
 

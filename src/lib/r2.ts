@@ -12,6 +12,7 @@ import { env, hasR2Config, requireEnvValue } from "@/lib/env";
 type ImageVariantOptions = {
   fit?: "cover" | "inside";
   height?: number;
+  mode?: "optimized" | "original";
   quality?: number;
   thumbHeight?: number;
   thumbWidth?: number;
@@ -91,15 +92,17 @@ export function createUploadDescriptor(
   fileName: string,
   contentType: string,
   slotKey?: string,
+  options?: ImageVariantOptions,
 ) {
   const { ext } = sanitizeBaseName(fileName);
   const assetExt = ext || (contentType.startsWith("video/") ? ".mp4" : ".bin");
-  const processedExt = contentType.startsWith("image/") ? ".webp" : assetExt;
+  const preserveOriginal = contentType.startsWith("image/") && options?.mode === "original";
+  const processedExt = contentType.startsWith("image/") && !preserveOriginal ? ".webp" : assetExt;
   const baseDirectory = buildUploadDirectory();
   const tempDirectory = buildUploadDirectory({ temporary: true });
   const baseName = buildUploadBaseName(fileName, slotKey);
   const processedFileKey = `${baseDirectory}/${baseName}${processedExt}`;
-  const fileKey = contentType.startsWith("image/")
+  const fileKey = contentType.startsWith("image/") && !preserveOriginal
     ? `${tempDirectory}/${baseName}${assetExt}`
     : processedFileKey;
 
@@ -110,7 +113,7 @@ export function createUploadDescriptor(
     fileKey,
     processedFileKey,
     safeName: baseName,
-    thumbKey: contentType.startsWith("image/")
+    thumbKey: contentType.startsWith("image/") && !preserveOriginal
       ? `${baseDirectory}/${baseName}-thumb.webp`
       : fileKey,
   };
@@ -270,6 +273,18 @@ async function buildImageVariants(
   buffer: Buffer,
   options?: ImageVariantOptions,
 ) {
+  if (options?.mode === "original") {
+    const metadata = await sharp(buffer, { failOn: "none" }).rotate().metadata();
+
+    return {
+      height: metadata.height ?? 0,
+      mainResult: buffer,
+      size: buffer.byteLength,
+      thumbResult: buffer,
+      width: metadata.width ?? 0,
+    };
+  }
+
   const fit = options?.fit ?? "inside";
   const resizeWidth = options?.width ?? 1600;
   const resizeHeight = options?.height ?? 1200;
@@ -322,12 +337,18 @@ export async function finalizeDirectUploadedImage(
 ) {
   const buffer = await readStoredAsset(fileKey);
   const processedFileKey = getProcessedFileKey(fileKey, contentType);
-  const thumbKey = getThumbKeyForFileKey(processedFileKey);
+  const preserveOriginal = options?.mode === "original";
+  const thumbKey = preserveOriginal ? processedFileKey : getThumbKeyForFileKey(processedFileKey);
   const variants = await buildImageVariants(buffer, options);
-  const [url, webpThumbUrl] = await Promise.all([
-    uploadAsset(processedFileKey, variants.mainResult, contentType),
-    uploadAsset(thumbKey, variants.thumbResult, "image/webp"),
-  ]);
+  const [url, webpThumbUrl] = preserveOriginal
+    ? await Promise.all([
+        uploadAsset(processedFileKey, variants.mainResult, contentType),
+        Promise.resolve(getPublicAssetUrl(processedFileKey)),
+      ])
+    : await Promise.all([
+        uploadAsset(processedFileKey, variants.mainResult, contentType),
+        uploadAsset(thumbKey, variants.thumbResult, "image/webp"),
+      ]);
 
   if (processedFileKey !== fileKey) {
     await deleteStoredAsset(fileKey).catch(() => {});
@@ -336,7 +357,7 @@ export async function finalizeDirectUploadedImage(
   return {
     fileKey: processedFileKey,
     height: variants.height,
-    mimeType: "image/webp",
+    mimeType: preserveOriginal ? contentType : "image/webp",
     size: variants.size,
     thumbKey,
     url,
@@ -356,20 +377,27 @@ export async function processMediaUpload(
     fileName,
     contentType,
     slotKey,
+    options,
   );
 
   if (contentType.startsWith("image/")) {
     const variants = await buildImageVariants(buffer, options);
+    const preserveOriginal = options?.mode === "original";
 
-    const [url, webpThumbUrl] = await Promise.all([
-      uploadAsset(processedFileKey, variants.mainResult, contentType),
-      uploadAsset(thumbKey, variants.thumbResult, "image/webp"),
-    ]);
+    const [url, webpThumbUrl] = preserveOriginal
+      ? await Promise.all([
+          uploadAsset(processedFileKey, variants.mainResult, contentType),
+          Promise.resolve(getPublicAssetUrl(processedFileKey)),
+        ])
+      : await Promise.all([
+          uploadAsset(processedFileKey, variants.mainResult, contentType),
+          uploadAsset(thumbKey, variants.thumbResult, "image/webp"),
+        ]);
 
     return {
       fileKey: processedFileKey,
       height: variants.height,
-      mimeType: "image/webp",
+      mimeType: preserveOriginal ? contentType : "image/webp",
       size: variants.size,
       thumbKey,
       url,

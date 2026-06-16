@@ -300,6 +300,13 @@ function getSlotOutputSummary(slot: SlotItem) {
     };
   }
 
+  if (profile.mode === "original") {
+    return {
+      main: "保留原图尺寸与原始文件大小，不做自动压缩",
+      secondary: "仍按槽位命名对象路径，但不会转 WebP 或缩放尺寸",
+    };
+  }
+
   return {
     main: `主图输出 ${profile.width} x ${profile.height} · ${profile.fit === "cover" ? "cover" : "inside"} · WebP`,
     secondary: `缩略图 ${profile.thumbWidth ?? "-"} x ${profile.thumbHeight ?? "-"} · 质量 ${profile.quality ?? "-"}`,

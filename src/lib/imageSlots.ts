@@ -1,13 +1,18 @@
 export type MediaSlotKind = "image" | "video";
 
-export type ImageProcessingProfile = {
-  fit?: "cover" | "inside";
-  height: number;
-  quality?: number;
-  thumbHeight?: number;
-  thumbWidth?: number;
-  width: number;
-};
+export type ImageProcessingProfile =
+  | {
+      mode: "original";
+    }
+  | {
+      fit?: "cover" | "inside";
+      height: number;
+      mode?: "optimized";
+      quality?: number;
+      thumbHeight?: number;
+      thumbWidth?: number;
+      width: number;
+    };
 
 export type ImageSlotDefinition = {
   category: string;
@@ -298,23 +303,13 @@ export function getImageProcessingProfile(
 
   if (slotKey.startsWith("brand.logo.")) {
     return {
-      width: 480,
-      height: 180,
-      fit: "inside",
-      quality: 82,
-      thumbWidth: 240,
-      thumbHeight: 90,
+      mode: "original",
     };
   }
 
   if (slotKey.startsWith("hero.")) {
     return {
-      width: 1600,
-      height: 900,
-      fit: "cover",
-      quality: 68,
-      thumbWidth: 640,
-      thumbHeight: 360,
+      mode: "original",
     };
   }
 
