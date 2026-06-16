@@ -3,11 +3,6 @@ import React from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { HeroContent } from "@/lib/siteSettingsTypes";
-import {
-  buildImageSrcSet,
-  buildMediaProxyUrl,
-  DEFAULT_HERO_IMAGE_WIDTHS,
-} from "@/lib/media-url";
 
 type Props = {
   hero: HeroContent;
@@ -18,16 +13,12 @@ const Hero = ({ hero }: Props) => {
     hero.primaryCtaHref?.startsWith("mailto:") || !hero.primaryCtaHref
       ? "#contact"
       : hero.primaryCtaHref;
-  const heroSrc = buildMediaProxyUrl(hero.backgroundImage, 1600);
-  const heroSrcSet = buildImageSrcSet(hero.backgroundImage, DEFAULT_HERO_IMAGE_WIDTHS);
 
   return (
     <header id="n" className="relative flex min-h-[68svh] items-center overflow-hidden bg-slate-950 sm:min-h-[74svh] lg:min-h-[80vh]">
       <div className="absolute inset-0">
         <img
-          src={heroSrc}
-          srcSet={heroSrcSet}
-          sizes="(min-width: 1024px) 100vw, 100vw"
+          src={hero.backgroundImage}
           alt=""
           aria-hidden="true"
           loading="eager"
