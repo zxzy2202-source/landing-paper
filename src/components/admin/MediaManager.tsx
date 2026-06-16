@@ -55,6 +55,7 @@ type StorageSummary = {
 type Props = {
   directUploadEnabled: boolean;
   files: MediaFileItem[];
+  r2Configured: boolean;
   slots: SlotItem[];
   storage: StorageSummary;
 };
@@ -316,6 +317,7 @@ function getSlotOutputSummary(slot: SlotItem) {
 export function MediaManager({
   directUploadEnabled,
   files: initialFiles,
+  r2Configured,
   slots: initialSlots,
   storage,
 }: Props) {
@@ -409,6 +411,16 @@ export function MediaManager({
     return accumulator;
   }, {});
   const slotGroupKeys = Object.keys(slotGroups).sort((left, right) => left.localeCompare(right));
+  const uploadModeHint = directUploadEnabled
+    ? TEXT.directModeHint
+    : r2Configured
+      ? "当前通过服务端写入 Cloudflare R2，可绕过浏览器跨域限制；图片仍会自动压缩并生成 WebP 缩略图。"
+      : TEXT.fallbackModeHint;
+  const uploadModeLabel = directUploadEnabled
+    ? "浏览器直传 R2 + 服务端后处理"
+    : r2Configured
+      ? "服务端写入 R2"
+      : "服务端中转上传";
 
   function focusSlot(slot: SlotItem) {
     setSlotQuery(slot.slotKey);
@@ -432,6 +444,24 @@ export function MediaManager({
 
   async function uploadViaServer(formData: FormData) {
     const response = await fetch("/api/admin/media", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = (await response.json()) as MediaFileItem & { error?: string };
+
+    if (!response.ok || result.error) {
+      throw new Error(result.error ?? TEXT.uploadFail);
+    }
+
+    return result;
+  }
+
+  async function uploadSlotViaServer(slot: SlotItem, file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`/api/admin/slots/${encodeURIComponent(slot.slotKey)}/upload`, {
       method: "POST",
       body: formData,
     });
@@ -526,7 +556,7 @@ export function MediaManager({
     setFeedback("");
 
     try {
-      if (!directUploadEnabled && file.size > FALLBACK_UPLOAD_LIMIT) {
+      if (!directUploadEnabled && !r2Configured && file.size > FALLBACK_UPLOAD_LIMIT) {
         throw new Error("当前未启用 R2 直传，大于 4MB 的文件可能会被平台拦截，请先完成 R2 配置。");
       }
 
@@ -810,19 +840,7 @@ export function MediaManager({
           throw new Error(result.error ?? TEXT.uploadFail);
         }
       } else {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch(`/api/admin/slots/${encodeURIComponent(slot.slotKey)}/upload`, {
-          method: "POST",
-          body: formData,
-        });
-
-        result = (await response.json()) as MediaFileItem & { error?: string };
-
-        if (!response.ok || result.error) {
-          throw new Error(result.error ?? TEXT.uploadFail);
-        }
+        result = await uploadSlotViaServer(slot, file);
       }
 
       setFiles((current) => [result, ...current.filter((item) => item.id !== result.id)]);
@@ -907,7 +925,7 @@ export function MediaManager({
             <p className="mt-3 text-lg font-semibold">{storage.providerLabel}</p>
             <p className="mt-2 text-sm text-slate-300">协议：{storage.protocolLabel}</p>
             <p className="mt-2 text-sm text-slate-300">
-              上传模式：{storage.directUploadEnabled ? "浏览器直传 R2 + 服务端后处理" : "服务端中转上传"}
+              上传模式：{uploadModeLabel}
             </p>
             <p className="mt-2 break-all text-sm text-slate-400">
               Bucket：{storage.bucketName || "未配置"}
@@ -984,7 +1002,7 @@ export function MediaManager({
             <h2 className="mt-2 text-2xl font-semibold text-slate-950">{TEXT.uploadTitle}</h2>
             <p className="mt-2 text-sm text-slate-500">{TEXT.uploadSubtitle}</p>
             <p className="mt-2 text-xs text-slate-400">
-              {directUploadEnabled ? TEXT.directModeHint : TEXT.fallbackModeHint}
+              {uploadModeHint}
             </p>
           </div>
         </div>
