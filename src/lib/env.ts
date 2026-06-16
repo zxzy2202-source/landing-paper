@@ -7,6 +7,7 @@ const serverEnvSchema = z.object({
   JWT_SECRET: z.string().min(32).optional(),
   NEXT_PUBLIC_R2_URL: z.string().url().optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  NOTIFICATION_EMAIL_TO: z.string().min(1).optional(),
   R2_ACCESS_KEY_ID: z.string().min(1).optional(),
   R2_ACCOUNT_ID: z.string().min(1).optional(),
   R2_BUCKET: z.string().min(1).optional(),

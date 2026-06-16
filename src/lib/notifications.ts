@@ -6,8 +6,8 @@ import { env } from "@/lib/env";
 
 type NotifyPayload = {
   category: "contact" | "quote" | "sample";
-  email: string;
   message: string;
+  replyTo?: string;
   title: string;
 };
 
@@ -37,7 +37,7 @@ async function notifyServerChan(payload: NotifyPayload) {
 }
 
 async function notifyResend(payload: NotifyPayload) {
-  if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) {
+  if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL || !env.NOTIFICATION_EMAIL_TO) {
     return { channel: "resend", skipped: true as const };
   }
 
@@ -45,9 +45,10 @@ async function notifyResend(payload: NotifyPayload) {
 
   const result = await resend.emails.send({
     from: env.RESEND_FROM_EMAIL,
-    to: payload.email,
+    to: env.NOTIFICATION_EMAIL_TO,
     subject: payload.title,
     text: payload.message,
+    replyTo: payload.replyTo,
   });
 
   return {

@@ -44,16 +44,18 @@ export async function createContactInquiry(input: ContactInquiryInput) {
 
   await notifyAll({
     category: "contact",
-    email: created.contactEmail,
     title: `New contact inquiry from ${created.contactName}`,
     message: [
+      `Category: contact`,
       `Name: ${created.contactName}`,
       `Email: ${created.contactEmail}`,
       `Company: ${created.companyName ?? "-"}`,
       `WhatsApp: ${created.whatsappNumber ?? "-"}`,
       `Interest: ${created.productInterest ?? "-"}`,
+      `Source: ${created.sourcePath ?? "-"}`,
       `Message: ${created.message ?? "-"}`,
     ].join("\n"),
+    replyTo: created.contactEmail,
   });
 
   return created;
