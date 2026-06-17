@@ -81,12 +81,12 @@ const ContactSection = ({ categories, contact }: Props) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Company Name</label>
-                  <Input name="company_name" placeholder="Your Company Ltd." className="bg-gray-50 focus:bg-white" />
+                  <label htmlFor="company_name" className="text-sm font-medium text-gray-700">Company Name</label>
+                  <Input id="company_name" name="company_name" placeholder="Your Company Ltd." className="bg-gray-50 focus:bg-white" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">WhatsApp Number</label>
-                  <Input type="tel" name="whatsapp_number" placeholder="+86 135 7282 1237" className="bg-gray-50 focus:bg-white" />
+                  <label htmlFor="whatsapp_number" className="text-sm font-medium text-gray-700">WhatsApp Number</label>
+                  <Input id="whatsapp_number" type="tel" name="whatsapp_number" placeholder="+86 135 7282 1237" className="bg-gray-50 focus:bg-white" />
                 </div>
               </div>
 
