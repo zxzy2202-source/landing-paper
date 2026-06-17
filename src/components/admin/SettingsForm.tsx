@@ -272,29 +272,33 @@ export function SettingsForm({ initialSettings, slots }: Props) {
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">邮箱</label>
+            <label htmlFor="contact-email" className="text-sm font-medium text-slate-700">邮箱</label>
             <Input
+              id="contact-email"
               value={settings.contact.email}
               onChange={(event) => setContactField("email", event.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">电话</label>
+            <label htmlFor="contact-phone" className="text-sm font-medium text-slate-700">电话</label>
             <Input
+              id="contact-phone"
               value={settings.contact.phone}
               onChange={(event) => setContactField("phone", event.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">WhatsApp</label>
+            <label htmlFor="contact-whatsapp" className="text-sm font-medium text-slate-700">WhatsApp</label>
             <Input
+              id="contact-whatsapp"
               value={settings.contact.whatsapp}
               onChange={(event) => setContactField("whatsapp", event.target.value)}
             />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">地址</label>
+            <label htmlFor="contact-address" className="text-sm font-medium text-slate-700">地址</label>
             <Textarea
+              id="contact-address"
               value={settings.contact.address}
               onChange={(event) => setContactField("address", event.target.value)}
             />
@@ -380,6 +384,23 @@ export function SettingsForm({ initialSettings, slots }: Props) {
           type="button"
           disabled={pending}
           onClick={() => startTransition(() => void save())}
+          className="h-11 rounded-full px-6"
+        >
+          {pending ? "保存中..." : "保存站点设置"}
+        </Button>
+        {feedback ? <p className="text-sm text-slate-600">{feedback}</p> : null}
+      </div>
+    </div>
+  );
+}
+ "保存站点设置"}
+        </Button>
+        {feedback ? <p className="text-sm text-slate-600">{feedback}</p> : null}
+      </div>
+    </div>
+  );
+}
+
           className="h-11 rounded-full px-6"
         >
           {pending ? "保存中..." : "保存站点设置"}
