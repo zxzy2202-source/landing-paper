@@ -32,6 +32,8 @@ const Navbar = async () => {
             srcSet={buildImageSrcSet(logoUrl, DEFAULT_LOGO_IMAGE_WIDTHS)}
             sizes="160px"
             alt="Zhixinpaper Logo"
+            width={160}
+            height={48}
             loading="eager"
             decoding="async"
             className="h-auto max-h-12 w-auto cursor-pointer object-contain transition-transform duration-300 hover:scale-105 md:max-h-16"

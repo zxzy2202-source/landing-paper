@@ -18,11 +18,14 @@ const Hero = ({ hero }: Props) => {
     hero.primaryCtaHref?.startsWith("mailto:") || !hero.primaryCtaHref
       ? "#contact"
       : hero.primaryCtaHref;
-  const heroSrc = buildMediaProxyUrl(hero.backgroundImage, 1600);
+  const heroSrc = buildMediaProxyUrl(hero.backgroundImage, 1280);
   const heroSrcSet = buildImageSrcSet(hero.backgroundImage, DEFAULT_HERO_IMAGE_WIDTHS);
 
   return (
-    <header id="n" className="relative flex min-h-[68svh] items-center overflow-hidden bg-slate-950 sm:min-h-[74svh] lg:min-h-[80vh]">
+    <header
+      id="n"
+      className="relative flex min-h-[68svh] items-center overflow-hidden bg-slate-950 sm:min-h-[74svh] lg:min-h-[80vh]"
+    >
       <div className="absolute inset-0">
         <img
           src={heroSrc}
@@ -37,13 +40,13 @@ const Hero = ({ hero }: Props) => {
         />
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/28 to-slate-950/72 sm:from-slate-950/36 sm:via-slate-950/20 sm:to-slate-950/56 lg:bg-gradient-to-r lg:from-slate-950/56 lg:via-slate-950/24 lg:to-transparent z-0 pointer-events-none"></div>
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-slate-950/50 via-slate-950/28 to-slate-950/72 sm:from-slate-950/36 sm:via-slate-950/20 sm:to-slate-950/56 lg:bg-gradient-to-r lg:from-slate-950/56 lg:via-slate-950/24 lg:to-transparent" />
 
-      <div className="container mx-auto px-4 sm:px-5 lg:px-8 py-12 sm:py-16 lg:py-24 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
-          <div className="lg:col-span-8 text-left">
+      <div className="container relative z-10 mx-auto px-4 py-12 sm:px-5 sm:py-16 lg:px-8 lg:py-24">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-8">
+          <div className="text-left lg:col-span-8">
             <div className="mb-6 inline-flex items-center gap-2 rounded-sm border border-blue-700/50 bg-blue-900/80 px-3 py-2 text-[11px] font-bold tracking-[0.2em] text-blue-100 shadow-sm backdrop-blur-sm sm:mb-8 sm:px-4 sm:text-sm sm:tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-blue-300" />
+              <span className="h-2 w-2 rounded-full bg-blue-300" />
               {hero.eyebrow}
             </div>
 

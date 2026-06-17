@@ -28,6 +28,8 @@ const Footer = async () => {
                 srcSet={buildImageSrcSet(logoUrl, DEFAULT_LOGO_IMAGE_WIDTHS)}
                 sizes="160px"
                 alt="Zhixinpaper Logo"
+                width={160}
+                height={64}
                 loading="lazy"
                 decoding="async"
                 className="h-16 w-auto max-w-full object-contain"
@@ -46,42 +48,27 @@ const Footer = async () => {
             </h4>
             <ul className="space-y-4 text-sm">
               <li>
-                <Link
-                  href={PRODUCTS_SECTION_HREF}
-                  className="transition-colors hover:text-blue-500"
-                >
+                <Link href={PRODUCTS_SECTION_HREF} className="transition-colors hover:text-blue-500">
                   POS Receipt Rolls
                 </Link>
               </li>
               <li>
-                <Link
-                  href={PRODUCTS_SECTION_HREF}
-                  className="transition-colors hover:text-blue-500"
-                >
+                <Link href={PRODUCTS_SECTION_HREF} className="transition-colors hover:text-blue-500">
                   Mobile Printer Rolls
                 </Link>
               </li>
               <li>
-                <Link
-                  href={PRODUCTS_SECTION_HREF}
-                  className="transition-colors hover:text-blue-500"
-                >
+                <Link href={PRODUCTS_SECTION_HREF} className="transition-colors hover:text-blue-500">
                   Custom Logo Rolls
                 </Link>
               </li>
               <li>
-                <Link
-                  href={PRODUCTS_SECTION_HREF}
-                  className="transition-colors hover:text-blue-500"
-                >
+                <Link href={PRODUCTS_SECTION_HREF} className="transition-colors hover:text-blue-500">
                   BPA-Free Options
                 </Link>
               </li>
               <li>
-                <Link
-                  href={PRODUCTS_SECTION_HREF}
-                  className="transition-colors hover:text-blue-500"
-                >
+                <Link href={PRODUCTS_SECTION_HREF} className="transition-colors hover:text-blue-500">
                   Industry Pages
                 </Link>
               </li>
@@ -123,35 +110,26 @@ const Footer = async () => {
             <ul className="space-y-4 text-sm">
               <li className="flex gap-3">
                 <span className="w-12 font-bold text-blue-500">EM:</span>
-                <a
-                  href="mailto:Sales@zxpapers.com"
-                  className="transition-colors hover:text-white"
-                >
+                <a href="mailto:Sales@zxpapers.com" className="transition-colors hover:text-white">
                   Sales@zxpapers.com
                 </a>
               </li>
               <li className="flex gap-3">
                 <span className="w-12 font-bold text-blue-500">TEL:</span>
-                <a
-                  href="tel:+8618092117618"
-                  className="transition-colors hover:text-white"
-                >
+                <a href="tel:+8618092117618" className="transition-colors hover:text-white">
                   +86 180 9211 7618
                 </a>
               </li>
               <li className="flex gap-3">
                 <span className="w-12 font-bold text-blue-500">AD:</span>
                 <span>
-                  Building 15, Phase 1 Zone 2, Ronghao Industrial Park, Gaoling
-                  District, Xi&apos;an, Shaanxi, China
+                  Building 15, Phase 1 Zone 2, Ronghao Industrial Park, Gaoling District,
+                  Xi&apos;an, Shaanxi, China
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="w-12 font-bold text-blue-500">CMS:</span>
-                <Link
-                  href="/admin/login"
-                  className="transition-colors hover:text-white"
-                >
+                <Link href="/admin/login" className="transition-colors hover:text-white">
                   Admin Login
                 </Link>
               </li>
