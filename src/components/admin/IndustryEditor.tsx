@@ -120,11 +120,12 @@ function IndustryEditorForm({
       />
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">内容 JSON</label>
+        <label htmlFor="industry-content-json" className="text-sm font-medium text-slate-700">内容 JSON</label>
         <p className="text-sm text-slate-500">
           高级内容仍可直接在这里编辑，Hero 图片已经独立可视化管理。
         </p>
         <Textarea
+          id="industry-content-json"
           name="contentJson"
           value={contentJson}
           onChange={(event) => setContentJson(event.target.value)}
@@ -304,6 +305,16 @@ export function IndustryEditor({ initialItems, mediaFiles }: Props) {
 
       <IndustryEditorForm
         key={selected.id || "new-industry"}
+        selected={selected}
+        mediaFiles={mediaFiles}
+        onSave={save}
+        onRemove={remove}
+        feedback={feedback}
+      />
+    </div>
+  );
+}
+ey={selected.id || "new-industry"}
         selected={selected}
         mediaFiles={mediaFiles}
         onSave={save}

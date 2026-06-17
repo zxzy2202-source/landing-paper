@@ -115,15 +115,17 @@ export function SettingsForm({ initialSettings, slots }: Props) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">顶部短标签</label>
+              <label htmlFor="hero-eyebrow" className="text-sm font-medium text-slate-700">顶部短标签</label>
               <Input
+                id="hero-eyebrow"
                 value={settings.hero.eyebrow}
                 onChange={(event) => setHeroField("eyebrow", event.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">高亮词</label>
+              <label htmlFor="hero-highlight" className="text-sm font-medium text-slate-700">高亮词</label>
               <Input
+                id="hero-highlight"
                 value={settings.hero.highlight}
                 onChange={(event) => setHeroField("highlight", event.target.value)}
               />
@@ -131,16 +133,18 @@ export function SettingsForm({ initialSettings, slots }: Props) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">主标题</label>
+            <label htmlFor="hero-title" className="text-sm font-medium text-slate-700">主标题</label>
             <Input
+              id="hero-title"
               value={settings.hero.title}
               onChange={(event) => setHeroField("title", event.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">首屏描述</label>
+            <label htmlFor="hero-description" className="text-sm font-medium text-slate-700">首屏描述</label>
             <Textarea
+              id="hero-description"
               value={settings.hero.description}
               onChange={(event) => setHeroField("description", event.target.value)}
               className="min-h-32"
@@ -379,6 +383,13 @@ export function SettingsForm({ initialSettings, slots }: Props) {
           className="h-11 rounded-full px-6"
         >
           {pending ? "保存中..." : "保存站点设置"}
+        </Button>
+        {feedback ? <p className="text-sm text-slate-600">{feedback}</p> : null}
+      </div>
+    </div>
+  );
+}
+ "保存站点设置"}
         </Button>
         {feedback ? <p className="text-sm text-slate-600">{feedback}</p> : null}
       </div>
