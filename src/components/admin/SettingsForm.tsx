@@ -393,27 +393,3 @@ export function SettingsForm({ initialSettings, slots }: Props) {
     </div>
   );
 }
- "保存站点设置"}
-        </Button>
-        {feedback ? <p className="text-sm text-slate-600">{feedback}</p> : null}
-      </div>
-    </div>
-  );
-}
-
-          className="h-11 rounded-full px-6"
-        >
-          {pending ? "保存中..." : "保存站点设置"}
-        </Button>
-        {feedback ? <p className="text-sm text-slate-600">{feedback}</p> : null}
-      </div>
-    </div>
-  );
-}
- "保存站点设置"}
-        </Button>
-        {feedback ? <p className="text-sm text-slate-600">{feedback}</p> : null}
-      </div>
-    </div>
-  );
-}

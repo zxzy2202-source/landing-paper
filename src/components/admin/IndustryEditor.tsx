@@ -314,13 +314,3 @@ export function IndustryEditor({ initialItems, mediaFiles }: Props) {
     </div>
   );
 }
-ey={selected.id || "new-industry"}
-        selected={selected}
-        mediaFiles={mediaFiles}
-        onSave={save}
-        onRemove={remove}
-        feedback={feedback}
-      />
-    </div>
-  );
-}
